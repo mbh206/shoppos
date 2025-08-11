@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String      @id @default(cuid())
+  email          String      @unique
+  name           String?
+  role           UserRole
+  hashedPassword String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  ordersOpened   Order[]     @relation("OpenedBy")
+  ordersClosed   Order[]     @relation("ClosedBy")
+}
+
+enum UserRole {
+  admin
+  host
+  server
+  kitchen
+}
+
+model Customer {
+  id               String        @id @default(cuid())
+  squareCustomerId String?       @unique
+  displayName      String?
+  phone            String?
+  email            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  orders           Order[]
+  paidOrders       Order[]       @relation("Payer")
+  seatSessions     SeatSession[]
+  rentals          Rental[]
+  eventTickets     EventTicket[]
+}
+
+model Table {
+  id        String      @id @default(cuid())
+  name      String
+  capacity  Int
+  status    TableStatus @default(available)
+  posX      Int         @default(0)
+  posY      Int         @default(0)
+  width     Int         @default(100)
+  height    Int         @default(100)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  seats     Seat[]
+}
+
+enum TableStatus {
+  available
+  seated
+  dirty
+  reserved
+  offline
+}
+
+model Seat {
+  id           String        @id @default(cuid())
+  tableId      String
+  number       Int
+  status       SeatStatus    @default(open)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  table        Table         @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  seatSessions SeatSession[]
+
+  @@unique([tableId, number])
+}
+
+enum SeatStatus {
+  open
+  occupied
+  closed
+}
+
+model Order {
+  id              String           @id @default(cuid())
+  squareOrderId   String?          @unique
+  channel         OrderChannel
+  status          OrderStatus
+  customerId      String?
+  payerCustomerId String?
+  openedByUserId  String
+  closedByUserId  String?
+  openedAt        DateTime         @default(now())
+  closedAt        DateTime?
+  notes           String?
+  customer        Customer?        @relation(fields: [customerId], references: [id])
+  payer           Customer?        @relation("Payer", fields: [payerCustomerId], references: [id])
+  openedBy        User             @relation("OpenedBy", fields: [openedByUserId], references: [id])
+  closedBy        User?            @relation("ClosedBy", fields: [closedByUserId], references: [id])
+  items           OrderItem[]
+  seatSessions    SeatSession[]
+  events          OrderEvent[]
+  payments        PaymentAttempt[]
+  eventTickets    EventTicket[]
+
+  @@index([status, channel])
+  @@index([openedAt])
+  @@index([customerId])
+}
+
+enum OrderChannel {
+  in_store
+  online_pickup
+  online_paid
+}
+
+enum OrderStatus {
+  open
+  awaiting_payment
+  paid
+  canceled
+  refunded
+}
+
+model OrderItem {
+  id                    String        @id @default(cuid())
+  orderId               String
+  kind                  OrderItemKind
+  name                  String
+  squareCatalogObjectId String?
+  qty                   Int
+  unitPriceMinor        Int
+  taxMinor              Int           @default(0)
+  totalMinor            Int
+  meta                  Json?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  order                 Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+enum OrderItemKind {
+  retail
+  fnb
+  seat_time
+  rental
+  event
+}
+
+model SeatSession {
+  id            String    @id @default(cuid())
+  seatId        String
+  orderId       String
+  customerId    String?
+  startedAt     DateTime
+  endedAt       DateTime?
+  billedMinutes Int       @default(0)
+  billedItemId  String?
+  seat          Seat      @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer      Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([seatId, orderId])
+  @@index([startedAt])
+}
+
+model InventoryReservation {
+  id                String            @id @default(cuid())
+  squareVariationId String
+  qty               Int
+  reason            ReservationReason
+  expiresAt         DateTime?
+  linkedOrderId     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([squareVariationId])
+  @@index([expiresAt])
+}
+
+enum ReservationReason {
+  pickup
+  rental
+}
+
+model Rental {
+  id                String       @id @default(cuid())
+  squareVariationId String
+  customerId        String
+  outAt             DateTime
+  dueAt             DateTime
+  returnedAt        DateTime?
+  depositMinor      Int
+  feeMinor          Int
+  status            RentalStatus
+  customer          Customer     @relation(fields: [customerId], references: [id])
+
+  @@index([status])
+  @@index([dueAt])
+}
+
+enum RentalStatus {
+  out
+  returned
+  overdue
+  lost
+}
+
+model Event {
+  id           String        @id @default(cuid())
+  title        String
+  startAt      DateTime
+  capacity     Int
+  squareItemId String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  tickets      EventTicket[]
+
+  @@index([startAt])
+}
+
+model EventTicket {
+  id         String       @id @default(cuid())
+  eventId    String
+  orderId    String?
+  customerId String?
+  status     TicketStatus
+  event      Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  order      Order?       @relation(fields: [orderId], references: [id])
+  customer   Customer?    @relation(fields: [customerId], references: [id])
+
+  @@index([eventId, status])
+}
+
+enum TicketStatus {
+  held
+  paid
+  canceled
+  refunded
+}
+
+model PaymentAttempt {
+  id              String        @id @default(cuid())
+  orderId         String
+  method          PaymentMethod
+  amountMinor     Int
+  squarePaymentId String?
+  status          PaymentStatus
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+enum PaymentMethod {
+  square_terminal
+  cash
+}
+
+enum PaymentStatus {
+  initiated
+  succeeded
+  failed
+  voided
+}
+
+model OrderEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  kind      String
+  payload   Json
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+model CatalogCache {
+  id                String   @id @default(cuid())
+  squareObjectId    String   @unique
+  type              String
+  version           BigInt
+  data              Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([type])
+}
+
+model InventoryCount {
+  id                String   @id @default(cuid())
+  squareVariationId String   @unique
+  locationId        String
+  quantity          Int
+  updatedAt         DateTime @updatedAt
+
+  @@index([locationId])
+}
