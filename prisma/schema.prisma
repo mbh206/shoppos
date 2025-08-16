@@ -42,17 +42,26 @@ model Customer {
 }
 
 model Table {
-  id        String      @id @default(cuid())
-  name      String
-  capacity  Int
-  status    TableStatus @default(available)
-  posX      Int         @default(0)
-  posY      Int         @default(0)
-  width     Int         @default(100)
-  height    Int         @default(100)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  seats     Seat[]
+  id           String      @id @default(cuid())
+  name         String
+  capacity     Int
+  status       TableStatus @default(available)
+  floor        Int         @default(1)
+  zone         String      @default("main")
+  shape        TableShape  @default(rectangle)
+  posX         Int         @default(0)
+  posY         Int         @default(0)
+  width        Int         @default(100)
+  height       Int         @default(100)
+  rotation     Int         @default(0)
+  isGroupable  Boolean     @default(false)
+  maxGroupSize Int?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  seats        Seat[]
+  gameSessions TableGameSession[]
+
+  @@index([floor, zone])
 }
 
 enum TableStatus {
@@ -61,6 +70,13 @@ enum TableStatus {
   dirty
   reserved
   offline
+}
+
+enum TableShape {
+  rectangle
+  circle
+  booth
+  bar
 }
 
 model Seat {
@@ -154,7 +170,7 @@ model SeatSession {
   seatId        String
   orderId       String
   customerId    String?
-  startedAt     DateTime
+  startedAt     DateTime? // Made optional for no-timer sessions
   endedAt       DateTime?
   billedMinutes Int       @default(0)
   billedItemId  String?
@@ -299,4 +315,232 @@ model InventoryCount {
   updatedAt         DateTime @updatedAt
 
   @@index([locationId])
+}
+
+model MenuCategory {
+  id          String      @id @default(cuid())
+  name        String
+  nameJa      String?     // Japanese name
+  description String?
+  sortOrder   Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       MenuItem[]
+
+  @@index([sortOrder])
+}
+
+model MenuItem {
+  id                String              @id @default(cuid())
+  categoryId        String?
+  name              String
+  nameJa            String?             // Japanese name
+  description       String?
+  customerPrice     Int                 // Price charged to customer in minor units (yen)
+  costPrice         Int                 @default(0) // Total cost of ingredients in minor units
+  quantity          String?             // e.g., "1 set", "300ml", "50g bag"
+  isAvailable       Boolean             @default(true)
+  sortOrder         Int                 @default(0)
+  imageUrl          String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  category          MenuCategory?       @relation(fields: [categoryId], references: [id])
+  ingredients       MenuItemIngredient[]
+  
+  @@index([categoryId])
+  @@index([sortOrder])
+}
+
+model Ingredient {
+  id                String              @id @default(cuid())
+  name              String              @unique
+  unit              String              // e.g., "g", "ml", "piece"
+  costPerUnit       Int                 // Cost per unit in minor units
+  stockQuantity     Float               @default(0)
+  minStock          Float               @default(0)
+  maxStock          Float?              // Maximum stock to maintain
+  reorderPoint      Float?              // When to reorder
+  reorderQuantity   Float?              // How much to reorder
+  supplier          String?
+  supplierSKU       String?             // Supplier's product code
+  leadTimeDays      Int                 @default(1) // How long it takes to receive
+  lastRestocked     DateTime?
+  expiryDate        DateTime?
+  notes             String?
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  menuItems         MenuItemIngredient[]
+  stockMovements    StockMovement[]
+  purchaseOrders    PurchaseOrderItem[]
+
+  @@index([name])
+  @@index([stockQuantity])
+}
+
+model MenuItemIngredient {
+  id           String      @id @default(cuid())
+  menuItemId   String
+  ingredientId String
+  quantity     Float       // Amount of ingredient used
+  isOptional   Boolean     @default(false) // For optional ingredients like flavoring
+  menuItem     MenuItem    @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient  @relation(fields: [ingredientId], references: [id])
+  
+  @@unique([menuItemId, ingredientId])
+  @@index([menuItemId])
+  @@index([ingredientId])
+}
+
+model StockMovement {
+  id              String              @id @default(cuid())
+  ingredientId    String
+  type            StockMovementType
+  quantity        Float               // Positive for additions, negative for removals
+  unitCost        Int?                // Cost per unit at time of movement
+  totalCost       Int?                // Total cost of this movement
+  reason          String?             // e.g., "Purchase", "Sale", "Waste", "Adjustment"
+  referenceId     String?             // e.g., orderId, purchaseOrderId
+  referenceType   String?             // e.g., "order", "purchase_order", "adjustment"
+  performedBy     String?             // userId who performed the movement
+  notes           String?
+  createdAt       DateTime            @default(now())
+  ingredient      Ingredient          @relation(fields: [ingredientId], references: [id])
+  
+  @@index([ingredientId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([referenceId])
+}
+
+model PurchaseOrder {
+  id              String              @id @default(cuid())
+  orderNumber     String              @unique
+  supplier        String
+  status          PurchaseOrderStatus @default(draft)
+  orderDate       DateTime            @default(now())
+  expectedDate    DateTime?
+  receivedDate    DateTime?
+  subtotal        Int                 @default(0) // in minor units
+  tax             Int                 @default(0)
+  shipping        Int                 @default(0)
+  total           Int                 @default(0)
+  notes           String?
+  createdBy       String?
+  receivedBy      String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  items           PurchaseOrderItem[]
+  
+  @@index([status])
+  @@index([orderDate])
+  @@index([supplier])
+}
+
+model PurchaseOrderItem {
+  id              String          @id @default(cuid())
+  purchaseOrderId String
+  ingredientId    String
+  quantity        Float
+  unitCost        Int             // Cost per unit in minor units
+  totalCost       Int             // Total cost for this line item
+  receivedQty     Float           @default(0)
+  notes           String?
+  purchaseOrder   PurchaseOrder   @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  ingredient      Ingredient      @relation(fields: [ingredientId], references: [id])
+  
+  @@index([purchaseOrderId])
+  @@index([ingredientId])
+}
+
+model InventorySnapshot {
+  id              String          @id @default(cuid())
+  date            DateTime        @default(now())
+  totalValue      Int             // Total inventory value in minor units
+  itemCount       Int             // Number of different items
+  lowStockItems   Int             // Number of items below reorder point
+  outOfStockItems Int             // Number of items with 0 stock
+  data            Json            // Detailed snapshot data
+  createdAt       DateTime        @default(now())
+  
+  @@index([date])
+}
+
+enum StockMovementType {
+  purchase        // Stock received from supplier
+  sale            // Stock used in sales
+  adjustment      // Manual adjustment
+  waste           // Spoilage or damage
+  transfer        // Transfer between locations
+  return          // Return to supplier
+  initial         // Initial stock count
+}
+
+enum PurchaseOrderStatus {
+  draft
+  sent
+  partial
+  received
+  cancelled
+}
+
+enum GameType {
+  board_game
+  card_game
+  party_game
+  strategy_game
+  cooperative_game
+  dice_game
+  rpg
+  miniatures
+  other
+}
+
+enum GameComplexity {
+  easy
+  medium
+  hard
+  expert
+}
+
+model Game {
+  id             String          @id @default(cuid())
+  name           String
+  nameJa         String?         // Japanese name if applicable
+  location       String          // Shelf number, storage location
+  available      Boolean         @default(true)
+  type           GameType        @default(board_game)
+  minPlayers     Int             @default(1)
+  maxPlayers     Int             @default(4)
+  duration       Int             @default(60) // Typical play time in minutes
+  complexity     GameComplexity  @default(medium)
+  setupTime      Int             @default(10) // Minutes to set up
+  description    String?         @db.Text
+  imageUrl       String?
+  timesPlayed    Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  
+  tableSessions  TableGameSession[]
+  
+  @@index([name])
+  @@index([available])
+  @@index([type])
+  @@index([complexity])
+}
+
+model TableGameSession {
+  id         String      @id @default(cuid())
+  tableId    String
+  gameId     String
+  startedAt  DateTime    @default(now())
+  endedAt    DateTime?
+  
+  table      Table       @relation(fields: [tableId], references: [id])
+  game       Game        @relation(fields: [gameId], references: [id])
+  
+  @@index([tableId])
+  @@index([gameId])
+  @@index([startedAt])
 }

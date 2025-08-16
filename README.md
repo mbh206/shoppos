@@ -1,4 +1,4 @@
-# ShopPOS - Custom Café/Retail POS System
+# KOMA POS - Custom Café/Retail POS System
 
 Square-integrated POS system for café and retail operations with seat timers, online pickup, rentals, and events.
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 type OrderItem = {
   id: string
@@ -34,7 +34,9 @@ type Order = {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'open' | 'paid'>('open')
+  const searchParams = useSearchParams()
+  const initialFilter = (searchParams.get('filter') || 'open') as 'all' | 'open' | 'paid'
+  const [filter, setFilter] = useState<'all' | 'open' | 'paid'>(initialFilter)
   const router = useRouter()
 
   useEffect(() => {

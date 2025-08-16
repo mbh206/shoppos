@@ -30,17 +30,18 @@ export async function GET() {
           },
         },
       },
-      orderBy: {
-        name: 'asc',
-      },
+      orderBy: [
+        { floor: 'asc' },
+        { zone: 'asc' },
+        { name: 'asc' },
+      ],
     })
 
-    return NextResponse.json(tables)
+    // Ensure we return an array even if empty
+    return NextResponse.json(tables || [])
   } catch (error) {
-    console.error('Error fetching floor data:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch floor data' },
-      { status: 500 }
-    )
+    console.error('Error fetching floor data - Full error:', error)
+    // Return empty array on error so UI can handle gracefully
+    return NextResponse.json([])
   }
 }

@@ -71,11 +71,30 @@ export default function CheckoutPage({
   const handlePayment = async () => {
     setProcessing(true)
     
-    // Simulate payment processing
-    setTimeout(() => {
-      alert(`Payment of ${formatMoney(getTotal())} processed via ${paymentMethod}`)
-      router.push('/orders')
-    }, 2000)
+    try {
+      const response = await fetch(`/api/orders/${resolvedParams.id}/payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          method: paymentMethod,
+          amountMinor: getTotal(),
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert(`Payment of ${formatMoney(getTotal())} processed successfully via ${paymentMethod}`)
+        router.push('/orders?filter=paid')
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Payment failed')
+        setProcessing(false)
+      }
+    } catch (error) {
+      console.error('Payment error:', error)
+      alert('Payment failed. Please try again.')
+      setProcessing(false)
+    }
   }
 
   if (loading) {

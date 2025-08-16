@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { OrderItemKind } from '@prisma/client'
+import { 
+  checkIngredientsAvailable, 
+  deductIngredientsForOrderItem,
+  returnIngredientsForOrderItem 
+} from '@/lib/inventory'
 
 export async function POST(
   request: NextRequest,
@@ -22,9 +27,24 @@ export async function POST(
     unitPriceMinor,
     taxMinor = 0,
     meta,
+    menuItemId, // Add menuItemId to link to inventory
   } = body
 
   try {
+    // If this is a regular menu item, check stock availability
+    if (menuItemId && kind === 'regular') {
+      const stockCheck = await checkIngredientsAvailable(menuItemId, qty)
+      if (!stockCheck.available) {
+        return NextResponse.json(
+          { 
+            error: 'Insufficient stock', 
+            details: stockCheck.issues 
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Calculate total
     const totalMinor = (qty * unitPriceMinor) + taxMinor
 
@@ -38,9 +58,23 @@ export async function POST(
         unitPriceMinor,
         taxMinor,
         totalMinor,
-        meta,
+        meta: {
+          ...meta,
+          menuItemId, // Store menuItemId in meta for reference
+        },
       },
     })
+
+    // Deduct ingredients from stock if this is a menu item
+    if (menuItemId && kind === 'regular') {
+      try {
+        await deductIngredientsForOrderItem(menuItemId, qty, id)
+      } catch (error) {
+        // If stock deduction fails, delete the created item
+        await prisma.orderItem.delete({ where: { id: item.id } })
+        throw error
+      }
+    }
 
     // Log order event
     await prisma.orderEvent.create({
@@ -80,7 +114,25 @@ export async function DELETE(
   const { itemId } = body
 
   try {
-    const item = await prisma.orderItem.delete({
+    // First get the item to check if we need to return stock
+    const item = await prisma.orderItem.findUnique({
+      where: { id: itemId },
+    })
+
+    if (!item) {
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 })
+    }
+
+    // If this item has a menuItemId, return ingredients to stock
+    if (item.meta && typeof item.meta === 'object' && 'menuItemId' in item.meta) {
+      const menuItemId = (item.meta as any).menuItemId
+      if (menuItemId && item.kind === 'regular') {
+        await returnIngredientsForOrderItem(menuItemId, item.qty, id)
+      }
+    }
+
+    // Now delete the item
+    await prisma.orderItem.delete({
       where: { id: itemId },
     })
 

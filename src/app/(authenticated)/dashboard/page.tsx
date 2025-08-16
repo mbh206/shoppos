@@ -196,21 +196,6 @@ export default async function DashboardPage() {
           </Link>
         )}
 
-        {/* Pickup Queue - Coming Soon */}
-        <div className="block">
-          <div className="bg-white rounded-lg shadow-md p-6 opacity-75">
-            <div className="flex items-center mb-4">
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Pickup Queue</h2>
-            <p className="text-gray-600">Online orders (Coming Soon)</p>
-          </div>
-        </div>
-
         {/* Rentals - Coming Soon */}
         <div className="block">
           <div className="bg-white rounded-lg shadow-md p-6 opacity-75">
@@ -225,6 +210,21 @@ export default async function DashboardPage() {
             <p className="text-gray-600">Manage rentals (Coming Soon)</p>
           </div>
         </div>
+        
+        {/* Game List */}
+        <Link href="/games" className="block">
+          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center mb-4">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Game Library</h2>
+            <p className="text-gray-600">Manage board games and assignments</p>
+          </div>
+        </Link>
 
         {/* Events - Coming Soon */}
         <div className="block">

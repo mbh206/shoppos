@@ -36,6 +36,14 @@ export async function GET(
             },
           },
         },
+        gameSessions: {
+          where: {
+            endedAt: null,
+          },
+          include: {
+            game: true,
+          },
+        },
       },
     })
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { calculateTimeCharge, formatTimeCharge, getTimeChargeDescription } from '@/lib/time-billing'
 
 export async function POST(
   request: NextRequest,
@@ -95,8 +96,6 @@ export async function DELETE(
   }
 
   const { id } = await params
-  const body = await request.json()
-  const { pricePerMinute = 10 } = body // Default ¥10 per minute
 
   try {
     // Find active session
@@ -124,33 +123,39 @@ export async function DELETE(
 
     const endedAt = new Date()
     const durationMs = endedAt.getTime() - seatSession.startedAt.getTime()
-    const durationMinutes = Math.ceil(durationMs / (1000 * 60))
+    const durationMinutes = Math.floor(durationMs / (1000 * 60))
     
-    // Calculate price in 30-minute blocks
-    const blocks = Math.ceil(durationMinutes / 30)
-    const pricePerBlock = 30 * pricePerMinute
-    const totalPrice = blocks * pricePerBlock
+    // Calculate time charge using our complex billing rules
+    const billing = calculateTimeCharge(durationMinutes)
+    const totalPrice = billing.totalCharge
+    const chargeDescription = getTimeChargeDescription(billing)
 
     // Start transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create order item for seat time
-      const orderItem = await tx.orderItem.create({
-        data: {
-          orderId: seatSession.orderId,
-          kind: 'seat_time',
-          name: `Seat ${seatSession.seat.table.name}-${seatSession.seat.number} (${durationMinutes} min)`,
-          qty: 1,
-          unitPriceMinor: totalPrice,
-          taxMinor: Math.floor(totalPrice * 0.1), // 10% tax
-          totalMinor: Math.floor(totalPrice * 1.1),
-          meta: {
-            seatId: id,
-            sessionId: seatSession.id,
-            durationMinutes,
-            blocks,
+      // Create order item for seat time (only if there's a charge)
+      let orderItem = null
+      if (totalPrice > 0) {
+        orderItem = await tx.orderItem.create({
+          data: {
+            orderId: seatSession.orderId,
+            kind: 'seat_time',
+            name: `Seat ${seatSession.seat.table.name}-${seatSession.seat.number} (${chargeDescription})`,
+            qty: 1,
+            unitPriceMinor: totalPrice * 100, // Convert to minor units (yen)
+            taxMinor: Math.floor(totalPrice * 10), // 10% tax in minor units
+            totalMinor: Math.floor(totalPrice * 110), // Total with tax in minor units
+            meta: {
+              seatId: id,
+              sessionId: seatSession.id,
+              durationMinutes,
+              billing: {
+                rateApplied: billing.rateApplied,
+                breakdown: billing.breakdown,
+              },
+            },
           },
-        },
-      })
+        })
+      }
 
       // Update seat session
       const updatedSession = await tx.seatSession.update({
@@ -158,7 +163,7 @@ export async function DELETE(
         data: {
           endedAt,
           billedMinutes: durationMinutes,
-          billedItemId: orderItem.id,
+          billedItemId: orderItem?.id || null,
         },
       })
 
@@ -195,7 +200,7 @@ export async function DELETE(
             endedAt: endedAt.toISOString(),
             durationMinutes,
             totalPrice,
-            orderItemId: orderItem.id,
+            orderItemId: orderItem?.id || null,
           },
         },
       })

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
 type NavigationProps = {
-  userRole: 'admin' | 'host' | 'server' | 'kitchen'
+  userRole: 'admin' | 'host' | 'server'
   userName: string | null
   userEmail: string
 }
@@ -23,7 +23,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
       ),
-      roles: ['admin', 'host', 'server', 'kitchen'],
+      roles: ['admin', 'host', 'server'],
     },
     {
       name: 'Floor Map',
@@ -36,24 +36,24 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
       roles: ['admin', 'host', 'server'],
     },
     {
-      name: 'Orders',
+      name: 'Bills',
       href: '/orders',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
         </svg>
       ),
       roles: ['admin', 'host', 'server'],
     },
     {
-      name: 'Kitchen',
-      href: '/kitchen',
+      name: 'Games',
+      href: '/games',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
         </svg>
       ),
-      roles: ['admin', 'kitchen'],
+      roles: ['admin', 'host', 'server'],
     },
     {
       name: 'Admin',
@@ -71,11 +71,11 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
   const filteredNavItems = navItems.filter(item => item.roles.includes(userRole))
 
   return (
-    <div className={`${isCollapsed ? 'w-16' : 'w-64'} bg-gray-900 text-white h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col`}>
+    <div className={`${isCollapsed ? 'w-16' : 'w-48'} bg-gray-900 text-white h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col`}>
       {/* Header */}
       <div className="p-4 border-b border-gray-800">
         <div className="flex items-center justify-between">
-          <h1 className={`font-bold text-xl ${isCollapsed ? 'hidden' : 'block'}`}>ShopPOS</h1>
+          <h1 className={`font-bold text-xl ${isCollapsed ? 'hidden' : 'block'}`}>KOMA POS</h1>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-1 hover:bg-gray-800 rounded"

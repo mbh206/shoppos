@@ -63,10 +63,6 @@ export default async function AdminPage() {
           <ul className="space-y-2 text-gray-600">
             <li className="flex items-center gap-2">
               <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
-              Online Pickup Queue
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
               Square Terminal Integration
             </li>
             <li className="flex items-center gap-2">
@@ -96,6 +92,18 @@ export default async function AdminPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Configuration</h2>
           <div className="space-y-3">
+            <a
+              href="/admin/floor-layout"
+              className="block w-full px-4 py-2 bg-blue-500 text-white text-center rounded hover:bg-blue-600"
+            >
+              Manage Floor Layout
+            </a>
+            <a
+              href="/admin/menu"
+              className="block w-full px-4 py-2 bg-blue-500 text-white text-center rounded hover:bg-blue-600"
+            >
+              Manage Menu Items
+            </a>
             <button 
               className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled
@@ -120,6 +128,43 @@ export default async function AdminPage() {
             >
               Connect Terminal Device
             </button>
+          </div>
+        </div>
+
+        {/* Inventory Management */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Inventory Management</h2>
+          <div className="space-y-3">
+            <a
+              href="/admin/inventory/ingredients"
+              className="block w-full px-4 py-2 bg-green-500 text-white text-center rounded hover:bg-green-600"
+            >
+              Manage Ingredients
+            </a>
+            <a
+              href="/admin/inventory/recipes"
+              className="block w-full px-4 py-2 bg-green-500 text-white text-center rounded hover:bg-green-600"
+            >
+              Recipe & COGS Analysis
+            </a>
+            <a
+              href="/admin/inventory/stock"
+              className="block w-full px-4 py-2 bg-green-500 text-white text-center rounded hover:bg-green-600"
+            >
+              Stock Movements
+            </a>
+            <a
+              href="/admin/inventory/purchase-orders"
+              className="block w-full px-4 py-2 bg-green-500 text-white text-center rounded hover:bg-green-600"
+            >
+              Purchase Orders
+            </a>
+            <a
+              href="/admin/inventory/reports"
+              className="block w-full px-4 py-2 bg-purple-500 text-white text-center rounded hover:bg-purple-600"
+            >
+              Inventory Reports
+            </a>
           </div>
         </div>
 

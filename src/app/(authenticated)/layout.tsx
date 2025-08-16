@@ -20,7 +20,7 @@ export default async function AuthenticatedLayout({
         userName={session.user.name}
         userEmail={session.user.email}
       />
-      <div className="flex-1 ml-16 lg:ml-64 transition-all duration-300">
+      <div className="flex-1 ml-16 lg:ml-48 transition-all duration-300">
         {children}
       </div>
     </div>
