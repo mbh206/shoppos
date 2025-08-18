@@ -36,9 +36,10 @@ export async function POST(
       )
     }
 
-    // Create game session and update game availability
-    const [gameSession, updatedGame] = await prisma.$transaction([
-      prisma.tableGameSession.create({
+    // Create game session, update game availability, and add to all active orders
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the game session
+      const gameSession = await tx.tableGameSession.create({
         data: {
           tableId,
           gameId,
@@ -46,14 +47,49 @@ export async function POST(
         include: {
           game: true,
         },
-      }),
-      prisma.game.update({
+      })
+
+      // Update game availability
+      await tx.game.update({
         where: { id: gameId },
         data: { available: false },
-      }),
-    ])
+      })
 
-    return NextResponse.json(gameSession)
+      // Find all active seat sessions at this table
+      const activeSeatSessions = await tx.seatSession.findMany({
+        where: {
+          seat: {
+            tableId,
+          },
+          endedAt: null,
+        },
+      })
+
+      // Add the game to all active orders at this table
+      for (const seatSession of activeSeatSessions) {
+        await tx.orderItem.create({
+          data: {
+            orderId: seatSession.orderId,
+            kind: 'retail',
+            name: `Game: ${game.name}`,
+            qty: 1,
+            unitPriceMinor: 0,
+            taxMinor: 0,
+            totalMinor: 0,
+            meta: {
+              isGame: true,
+              gameId: game.id,
+              sessionId: gameSession.id,
+              startedAt: gameSession.startedAt.toISOString(),
+            },
+          },
+        })
+      }
+
+      return gameSession
+    })
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error assigning game to table:', error)
     return NextResponse.json(

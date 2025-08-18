@@ -12,7 +12,6 @@ Square-integrated POS system for café and retail operations with seat timers, o
 - ✅ Order management with items and totals
 
 ### In Progress
-- Online Pickup Queue with webhook handling
 - Square Terminal + Cash checkout
 - Printing support with ESC/POS
 - Catalog & Inventory sync from Square

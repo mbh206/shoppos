@@ -145,10 +145,10 @@ export default function FloorMap() {
             <div className="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
             <span className="text-sm">Dirty</span>
           </div>
-          <div className="flex items-center">
+          {/* <div className="flex items-center">
             <div className="w-4 h-4 bg-purple-500 rounded mr-2"></div>
             <span className="text-sm">Reserved</span>
-          </div>
+          </div> */}
           <div className="flex items-center">
             <div className="w-4 h-4 bg-gray-500 rounded mr-2"></div>
             <span className="text-sm">Offline</span>

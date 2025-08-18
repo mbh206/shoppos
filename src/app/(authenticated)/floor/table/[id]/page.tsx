@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { getEstimatedCharge, formatTimeCharge } from '@/lib/time-billing'
 import MenuItemSelector from '@/components/MenuItemSelector'
+import CustomerSelector from '@/components/CustomerSelector'
 
 type Customer = {
   id: string
@@ -18,6 +19,7 @@ type OrderItem = {
   qty: number
   totalMinor: number
   kind: string
+  meta?: any
 }
 
 type Order = {
@@ -25,6 +27,7 @@ type Order = {
   status: string
   customer?: Customer | null
   items: OrderItem[]
+  meta?: any
 }
 
 type SeatSession = {
@@ -34,6 +37,7 @@ type SeatSession = {
   billedMinutes: number
   customer?: Customer | null
   order: Order
+  meta?: any
 }
 
 type Seat = {
@@ -80,16 +84,22 @@ export default function TableDetailPage({
   const [loading, setLoading] = useState(true)
   const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [confirmingStop, setConfirmingStop] = useState<Seat | null>(null)
   const [showingAddItems, setShowingAddItems] = useState<Seat | null>(null)
   const [transferringSeat, setTransferringSeat] = useState<Seat | null>(null)
   const [availableSeats, setAvailableSeats] = useState<{id: string, number: number, tableName: string}[]>([])
   const [showGameModal, setShowGameModal] = useState(false)
   const [availableGames, setAvailableGames] = useState<Game[]>([])
+  const [editingSession, setEditingSession] = useState<SeatSession | null>(null)
+  const [editStartTime, setEditStartTime] = useState('')
+  const [editEndTime, setEditEndTime] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [selectingCustomerFor, setSelectingCustomerFor] = useState<Seat | null>(null)
+  const [pendingCustomer, setPendingCustomer] = useState<Customer | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     fetchTableData()
+    checkAdminStatus()
     const dataInterval = setInterval(fetchTableData, 5000)
     const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => {
@@ -97,6 +107,18 @@ export default function TableDetailPage({
       clearInterval(timeInterval)
     }
   }, [])
+
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch('/api/auth/session')
+      if (response.ok) {
+        const session = await response.json()
+        setIsAdmin(session?.user?.role === 'admin')
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error)
+    }
+  }
 
   const fetchTableData = async () => {
     try {
@@ -130,14 +152,24 @@ export default function TableDetailPage({
   }
 
   const calculateSeatTotal = (seat: Seat) => {
-    const activeSession = seat.seatSessions.find(s => !s.endedAt)
+    // Find any unpaid session
+    const activeSession = seat.seatSessions.find(s => 
+      s.order.status === 'open' || s.order.status === 'awaiting_payment'
+    )
     if (!activeSession) return 0
 
-    // Calculate current time charge
+    // Calculate time charge
     let timeCharge = 0
     if (activeSession.startedAt) {
-      const billing = getEstimatedCharge(activeSession.startedAt)
-      timeCharge = billing.totalCharge * 100 // Convert to minor units
+      if (activeSession.endedAt) {
+        // Timer stopped - use the billed amount
+        const billedItem = activeSession.order.items.find(item => item.kind === 'seat_time')
+        timeCharge = billedItem ? billedItem.totalMinor : 0
+      } else {
+        // Timer still running - calculate current charge
+        const billing = getEstimatedCharge(activeSession.startedAt)
+        timeCharge = billing.totalCharge * 100 // Convert to minor units
+      }
     }
 
     // Calculate items total
@@ -150,7 +182,7 @@ export default function TableDetailPage({
     setSelectedSeat(seat)
   }
 
-  const handleStartTimer = async (seat: Seat) => {
+  const handleStartTimer = async (seat: Seat, customerId?: string) => {
     try {
       // First create an order for this seat
       const orderResponse = await fetch('/api/orders', {
@@ -159,25 +191,39 @@ export default function TableDetailPage({
         body: JSON.stringify({
           channel: 'in_store',
           tableId: table?.id,
+          customerId,
         }),
       })
       const order = await orderResponse.json()
 
-      // Start the timer
+      // Start the timer with customer if provided
       const response = await fetch(`/api/seats/${seat.id}/timer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderId: order.id,
+          customerId,
         }),
       })
 
       if (response.ok) {
         fetchTableData()
         setSelectedSeat(null)
+        setSelectingCustomerFor(null)
+        setPendingCustomer(null)
       }
     } catch (error) {
       console.error('Error starting timer:', error)
+    }
+  }
+
+  const handleStartTimerClick = (seat: Seat) => {
+    setSelectingCustomerFor(seat)
+  }
+
+  const handleCustomerSelected = (customer: Customer | null) => {
+    if (selectingCustomerFor) {
+      handleStartTimer(selectingCustomerFor, customer?.id)
     }
   }
 
@@ -192,16 +238,20 @@ export default function TableDetailPage({
       if (response.ok) {
         fetchTableData()
         setSelectedSeat(null)
-        setConfirmingStop(null)
+      } else {
+        const error = await response.json()
+        console.error('Error stopping timer:', error)
+        alert(error.error || 'Failed to stop timer')
       }
     } catch (error) {
       console.error('Error stopping timer:', error)
+      alert('Failed to stop timer')
     }
   }
 
   const handleStopTimerClick = (e: React.MouseEvent, seat: Seat) => {
     e.stopPropagation()
-    setConfirmingStop(seat)
+    handleStopTimer(seat)
   }
 
   const handleAddItemsClick = (e: React.MouseEvent, seat: Seat) => {
@@ -211,9 +261,57 @@ export default function TableDetailPage({
 
   const handleCheckoutClick = (e: React.MouseEvent, seat: Seat) => {
     e.stopPropagation()
-    const activeSession = seat.seatSessions.find(s => !s.endedAt)
+    // Find any unpaid session (awaiting_payment status means timer stopped but not paid)
+    const activeSession = seat.seatSessions.find(s => 
+      s.order.status === 'open' || s.order.status === 'awaiting_payment'
+    )
     if (activeSession) {
       router.push(`/checkout/${activeSession.order.id}`)
+    }
+  }
+
+  const handleEditTimeClick = (e: React.MouseEvent, seatSession: SeatSession) => {
+    e.stopPropagation()
+    setEditingSession(seatSession)
+    // Format dates for datetime-local input
+    const startDate = new Date(seatSession.startedAt)
+    const formattedStart = startDate.toISOString().slice(0, 16)
+    setEditStartTime(formattedStart)
+    
+    if (seatSession.endedAt) {
+      const endDate = new Date(seatSession.endedAt)
+      const formattedEnd = endDate.toISOString().slice(0, 16)
+      setEditEndTime(formattedEnd)
+    } else {
+      setEditEndTime('')
+    }
+  }
+
+  const handleSaveEditedTime = async () => {
+    if (!editingSession) return
+
+    try {
+      const response = await fetch(`/api/admin/seat-sessions/${editingSession.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startedAt: editStartTime ? new Date(editStartTime).toISOString() : undefined,
+          endedAt: editEndTime ? new Date(editEndTime).toISOString() : undefined
+        })
+      })
+
+      if (response.ok) {
+        fetchTableData()
+        setEditingSession(null)
+        setEditStartTime('')
+        setEditEndTime('')
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to update session times')
+      }
+    } catch (error) {
+      console.error('Error updating session times:', error)
+      alert('Failed to update session times')
     }
   }
 
@@ -520,11 +618,15 @@ export default function TableDetailPage({
           {table.seats
             .sort((a, b) => a.number - b.number)
             .map((seat) => {
-            const activeSession = seat.seatSessions.find(s => !s.endedAt)
+            // Find any unpaid session (either timer running or stopped but not checked out)
+            const activeSession = seat.seatSessions.find(s => 
+              s.order.status === 'open' || s.order.status === 'awaiting_payment'
+            )
             const isOccupied = seat.status === 'occupied'
             const currentTotal = calculateSeatTotal(seat)
-            const hasTimer = activeSession && activeSession.startedAt
-            const hasItems = activeSession && activeSession.order.items.filter(item => item.kind !== 'seat_time').length > 0
+            // Timer is running if there's a startedAt but no endedAt
+            const hasTimer = activeSession && activeSession.startedAt && !activeSession.endedAt
+            const hasItems = activeSession && activeSession.order.items.filter(item => item.kind !== 'seat_time' && !item.meta?.isGame).length > 0
 
             return (
               <div
@@ -552,13 +654,35 @@ export default function TableDetailPage({
                     {/* Timer Section or No Timer Status */}
                     {hasTimer ? (
                       <>
+                        <div className="text-sm flex justify-between items-center">
+                          <div>
+                            <span className="font-medium">Started:</span>{' '}
+                            {new Date(activeSession.startedAt).toLocaleString('ja-JP', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => handleEditTimeClick(e, activeSession)}
+                              className="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded"
+                              title="Edit session times"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
                         <div className="text-sm">
-                          <span className="font-medium">Timer:</span>{' '}
-                          {formatDuration(activeSession.startedAt)}
+                          <span className="font-medium">Duration:</span>{' '}
+                          <span className="font-semibold text-yellow-600">
+                            {formatDuration(activeSession.startedAt)}
+                          </span>
                         </div>
                         <div className="text-sm">
                           <span className="font-medium">Time Charge:</span>{' '}
-                          <span className="text-blue-600 font-semibold">
+                          <span className="text-red-700 font-semibold">
                             {(() => {
                               const billing = getEstimatedCharge(activeSession.startedAt)
                               if (billing.totalCharge === 0) {
@@ -584,83 +708,129 @@ export default function TableDetailPage({
                     )}
 
                     {/* Customer Info */}
-                    {activeSession.customer && (
+                    {activeSession && activeSession.customer && (
                       <div className="text-sm">
                         <span className="font-medium">Customer:</span>{' '}
-                        {activeSession.customer.displayName || 'Guest'}
+                        <span className='text-blue-600'>{activeSession.customer.displayName || 'Guest'}</span>
+                      </div>
+                    )}
+
+                    {/* Merge Status */}
+                    {activeSession && activeSession.meta?.mergedToSessionId && (
+                      <div className="text-sm bg-purple-100 text-purple-800 p-2 rounded">
+                        <span className="font-medium">💳 Bill Merged</span>
+                        <div className="text-xs">Bill has been merged to another seat</div>
+                      </div>
+                    )}
+                    {activeSession && activeSession.order.meta?.mergedToOrderId && (
+                      <div className="text-sm bg-purple-100 text-purple-800 p-2 rounded">
+                        <span className="font-medium">💳 Bill Merged</span>
+                        <div className="text-xs">Bill has been merged to another seat</div>
                       </div>
                     )}
 
                     {/* Order Items */}
-                    {hasItems && (
+                    {activeSession && hasItems && (
                       <div className="text-sm border-t pt-2">
-                        <div className="font-medium mb-1">Order Items:</div>
+                        <div className="font-medium mb-1">Ordered Items:</div>
                         {activeSession.order.items
-                          .filter(item => item.kind !== 'seat_time')
+                          .filter(item => item.kind !== 'seat_time' && !item.meta?.isGame)
                           .slice(0, 3)
                           .map((item, idx) => (
                             <div key={idx} className="text-xs text-gray-600">
                               {item.qty}x {item.name} - {formatMoney(item.totalMinor)}
                             </div>
                           ))}
-                        {activeSession.order.items.filter(item => item.kind !== 'seat_time').length > 3 && (
+                        {activeSession.order.items.filter(item => item.kind !== 'seat_time' && !item.meta?.isGame).length > 3 && (
                           <div className="text-xs text-gray-500">
-                            +{activeSession.order.items.filter(item => item.kind !== 'seat_time').length - 3} more items
+                            +{activeSession.order.items.filter(item => item.kind !== 'seat_time' && !item.meta?.isGame).length - 3} more items
                           </div>
                         )}
                       </div>
                     )}
 
-                    {/* Total Bill */}
-                    <div className="border-t pt-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-sm">Current Bill:</span>
-                        <span className="font-bold text-lg text-green-600">
-                          {formatMoney(currentTotal)}
-                        </span>
+                    {/* Games Played */}
+                    {activeSession && activeSession.order.items.some(item => item.meta?.isGame) && (
+                      <div className="text-sm border-t pt-2">
+                        <div className="font-medium mb-1">Games Played:</div>
+                        {activeSession.order.items
+                          .filter(item => item.meta?.isGame)
+                          .map((item, idx) => (
+                            <div key={idx} className="text-xs text-purple-600">
+                              🎲 {item.name.replace('Game: ', '')}
+                            </div>
+                          ))}
                       </div>
-                    </div>
+                    )}
+
+                    {/* Total Bill */}
+                    {activeSession && (
+                      <div className="border-t pt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-sm">Current Bill:</span>
+                          <span className="font-bold text-lg text-green-600">
+                            {activeSession.meta?.mergedToSessionId || activeSession.order.meta?.mergedToOrderId
+                              ? '¥0 (Merged)'
+                              : formatMoney(currentTotal)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Action Buttons */}
-                    <div className="grid grid-cols-2 gap-2 mt-3">
-                      {hasTimer && (
+                    {activeSession && (
+                      <div className="grid grid-cols-3 gap-2 mt-3">
+                        {hasTimer && (
+                          <button
+                            onClick={(e) => handleStopTimerClick(e, seat)}
+                            className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
+                          >
+                            Stop Timer
+                          </button>
+                        )}
+                        {!hasTimer && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleStartTimerClick(seat)
+                            }}
+                            className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                          >
+                            Start Timer
+                          </button>
+                        )}
                         <button
-                          onClick={(e) => handleStopTimerClick(e, seat)}
-                          className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
+                          onClick={(e) => handleAddItemsClick(e, seat)}
+                          disabled={!!(activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId)}
+                          className={`px-2 py-1 rounded text-xs ${
+                            activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-purple-500 text-white hover:bg-purple-600'
+                          }`}
+                          title={activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId ? 'Bill has been merged' : 'Add Items'}
                         >
-                          Stop Timer
+                          Add Items
                         </button>
-                      )}
-                      {!hasTimer && (
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleStartTimer(seat)
-                          }}
-                          className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                          onClick={(e) => handleTransferClick(e, seat)}
+                          className="px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600"
                         >
-                          Start Timer
+                          Transfer
                         </button>
-                      )}
-                      <button
-                        onClick={(e) => handleAddItemsClick(e, seat)}
-                        className="px-2 py-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600"
-                      >
-                        Add Items
-                      </button>
-                      <button
-                        onClick={(e) => handleTransferClick(e, seat)}
-                        className="px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600"
-                      >
-                        Transfer
-                      </button>
-                      <button
-                        onClick={(e) => handleCheckoutClick(e, seat)}
-                        className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
-                      >
-                        Checkout
-                      </button>
-                    </div>
+                        {/* <button
+                          onClick={(e) => handleCheckoutClick(e, seat)}
+                          disabled={!!hasTimer}
+                          className={`px-2 py-1 rounded text-xs ${
+                            hasTimer 
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                              : 'bg-green-500 text-white hover:bg-green-600'
+                          }`}
+                          title={hasTimer ? 'Stop timer before checkout' : 'Checkout'}
+                        >
+                          Checkout
+                        </button> */}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -669,7 +839,7 @@ export default function TableDetailPage({
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleStartTimer(seat)
+                        handleStartTimerClick(seat)
                       }}
                       className="w-full px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
                     >
@@ -747,7 +917,7 @@ export default function TableDetailPage({
       </div>
 
       {/* Seat Detail Modal */}
-      {selectedSeat && !confirmingStop && !showingAddItems && (
+      {selectedSeat && !showingAddItems && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">
@@ -865,93 +1035,6 @@ export default function TableDetailPage({
         </div>
       )}
 
-      {/* Stop Timer Confirmation */}
-      {confirmingStop && (() => {
-        const activeSession = confirmingStop.seatSessions.find(s => !s.endedAt)
-        if (!activeSession) return null
-        
-        const billing = getEstimatedCharge(activeSession.startedAt)
-        const minutes = getMinutesSince(activeSession.startedAt)
-        const hours = Math.floor(minutes / 60)
-        const mins = minutes % 60
-        
-        return (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h2 className="text-xl font-bold mb-4">
-                Stop Timer for Seat {confirmingStop.number}?
-              </h2>
-              
-              <div className="space-y-3 mb-6">
-                <div className="p-4 bg-gray-50 rounded">
-                  <div className="text-sm text-gray-600 mb-1">Duration</div>
-                  <div className="text-lg font-semibold">
-                    {hours > 0 ? `${hours} hour${hours > 1 ? 's' : ''} ${mins} minute${mins !== 1 ? 's' : ''}` : `${mins} minute${mins !== 1 ? 's' : ''}`}
-                  </div>
-                </div>
-                
-                <div className="p-4 bg-blue-50 rounded">
-                  <div className="text-sm text-blue-600 mb-1">Time Charge</div>
-                  <div className="text-2xl font-bold text-blue-700">
-                    ¥{billing.totalCharge.toLocaleString('ja-JP')}
-                  </div>
-                  {billing.totalCharge > 0 && (
-                    <div className="text-xs text-blue-600 mt-2">
-                      {billing.rateApplied === '5hour' && '5-hour cap applied (¥420/hr, max ¥2,100)'}
-                      {billing.rateApplied === '3hour' && '3-hour discount rate applied (¥450/hr)'}
-                      {billing.rateApplied === 'standard' && `Standard rate (¥500/hr)`}
-                      {billing.breakdown.graceApplied && ' - Includes grace period'}
-                      {billing.breakdown.halfHours > 0 && ` - Includes ${billing.breakdown.halfHours} half-hour charge`}
-                    </div>
-                  )}
-                  {billing.totalCharge === 0 && (
-                    <div className="text-xs text-blue-600 mt-1">
-                      No charge - within 10-minute grace period
-                    </div>
-                  )}
-                </div>
-                
-                {activeSession.order.items.length > 0 && (
-                  <div className="p-4 bg-gray-50 rounded">
-                    <div className="text-sm text-gray-600 mb-1">Order Items</div>
-                    <div className="text-lg font-semibold">
-                      {formatMoney(
-                        activeSession.order.items.reduce((sum, item) => sum + item.totalMinor, 0)
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="p-4 bg-green-50 rounded border-2 border-green-200">
-                  <div className="text-sm text-green-700 mb-1">Total Bill</div>
-                  <div className="text-2xl font-bold text-green-800">
-                    {formatMoney(
-                      (billing.totalCharge * 100) + 
-                      activeSession.order.items.reduce((sum, item) => sum + item.totalMinor, 0)
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <button
-                  onClick={() => setConfirmingStop(null)}
-                  className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleStopTimer(confirmingStop)}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  Stop Timer & Add Charge
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
-
       {/* Add Items Modal */}
       {showingAddItems && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -1062,20 +1145,52 @@ export default function TableDetailPage({
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {availableGames.map((game) => (
                     <button
                       key={game.id}
                       onClick={() => handleAssignGame(game.id)}
-                      className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-400 transition-all text-left"
+                      className="flex gap-3 p-3 border rounded-lg hover:bg-purple-50 hover:border-purple-400 transition-all text-left"
                     >
-                      <div className="font-semibold">{game.name}</div>
-                      {game.nameJa && (
-                        <div className="text-xs text-gray-500">{game.nameJa}</div>
-                      )}
-                      <div className="text-sm text-gray-600 mt-2">
-                        <div>{game.minPlayers}-{game.maxPlayers} players</div>
-                        <div className="capitalize">{game.complexity} • {game.type.replace(/_/g, ' ')}</div>
+                      {/* Game Image */}
+                      <div className="flex-shrink-0">
+                        {game.thumbnailUrl || game.imageUrl ? (
+                          <img 
+                            src={game.thumbnailUrl || game.imageUrl || ''} 
+                            alt={game.name}
+                            className="w-20 h-20 object-cover rounded"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
+                            }}
+                          />
+                        ) : (
+                          <div className="w-20 h-20 bg-gray-200 rounded flex items-center justify-center">
+                            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Game Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold">{game.name}</div>
+                        {game.nameJa && (
+                          <div className="text-xs text-gray-500">{game.nameJa}</div>
+                        )}
+                        <div className="text-sm text-gray-600 mt-1">
+                          <div>{game.minPlayers}-{game.maxPlayers} players • {game.duration} min</div>
+                          <div className="capitalize">{game.complexity}</div>
+                          {game.bggRating && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                              <span className="text-xs">{game.bggRating.toFixed(1)}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -1096,6 +1211,90 @@ export default function TableDetailPage({
             )}
           </div>
         </div>
+      )}
+
+      {/* Edit Session Time Modal (Admin Only) */}
+      {editingSession && isAdmin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">
+              Edit Session Times
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Start Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editStartTime}
+                  onChange={(e) => setEditStartTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  End Time (optional - leave empty for ongoing session)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editEndTime}
+                  onChange={(e) => setEditEndTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              {editStartTime && editEndTime && (
+                <div className="p-3 bg-blue-50 rounded">
+                  <div className="text-sm">
+                    <span className="font-medium">Duration:</span>{' '}
+                    {(() => {
+                      const start = new Date(editStartTime)
+                      const end = new Date(editEndTime)
+                      const diffMs = end.getTime() - start.getTime()
+                      const diffMins = Math.floor(diffMs / 60000)
+                      const hours = Math.floor(diffMins / 60)
+                      const mins = diffMins % 60
+                      return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+                    })()}
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setEditingSession(null)
+                    setEditStartTime('')
+                    setEditEndTime('')
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEditedTime}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Selector Modal */}
+      {selectingCustomerFor && (
+        <CustomerSelector
+          onSelectCustomer={handleCustomerSelected}
+          onClose={() => {
+            setSelectingCustomerFor(null)
+            setPendingCustomer(null)
+          }}
+        />
       )}
     </div>
   )

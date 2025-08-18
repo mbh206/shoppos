@@ -31,8 +31,8 @@ export async function POST(
   } = body
 
   try {
-    // If this is a regular menu item, check stock availability
-    if (menuItemId && kind === 'regular') {
+    // If this is a food/beverage menu item, check stock availability
+    if (menuItemId && kind === 'fnb') {
       const stockCheck = await checkIngredientsAvailable(menuItemId, qty)
       if (!stockCheck.available) {
         return NextResponse.json(
@@ -45,8 +45,8 @@ export async function POST(
       }
     }
 
-    // Calculate total
-    const totalMinor = (qty * unitPriceMinor) + taxMinor
+    // Calculate total (price is tax-inclusive)
+    const totalMinor = qty * unitPriceMinor
 
     const item = await prisma.orderItem.create({
       data: {
@@ -66,7 +66,7 @@ export async function POST(
     })
 
     // Deduct ingredients from stock if this is a menu item
-    if (menuItemId && kind === 'regular') {
+    if (menuItemId && kind === 'fnb') {
       try {
         await deductIngredientsForOrderItem(menuItemId, qty, id)
       } catch (error) {
@@ -126,7 +126,7 @@ export async function DELETE(
     // If this item has a menuItemId, return ingredients to stock
     if (item.meta && typeof item.meta === 'object' && 'menuItemId' in item.meta) {
       const menuItemId = (item.meta as any).menuItemId
-      if (menuItemId && item.kind === 'regular') {
+      if (menuItemId && item.kind === 'fnb') {
         await returnIngredientsForOrderItem(menuItemId, item.qty, id)
       }
     }

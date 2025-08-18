@@ -63,6 +63,37 @@ export async function POST(
       data: { status: 'seated' },
     })
 
+    // Add any active games at this table to the new order
+    const activeTableGames = await prisma.tableGameSession.findMany({
+      where: {
+        tableId: seatSession.seat.tableId,
+        endedAt: null,
+      },
+      include: {
+        game: true,
+      },
+    })
+
+    for (const gameSession of activeTableGames) {
+      await prisma.orderItem.create({
+        data: {
+          orderId,
+          kind: 'retail',
+          name: `Game: ${gameSession.game.name}`,
+          qty: 1,
+          unitPriceMinor: 0,
+          taxMinor: 0,
+          totalMinor: 0,
+          meta: {
+            isGame: true,
+            gameId: gameSession.gameId,
+            sessionId: gameSession.id,
+            startedAt: gameSession.startedAt.toISOString(),
+          },
+        },
+      })
+    }
+
     // Log order event
     await prisma.orderEvent.create({
       data: {
@@ -142,8 +173,8 @@ export async function DELETE(
             name: `Seat ${seatSession.seat.table.name}-${seatSession.seat.number} (${chargeDescription})`,
             qty: 1,
             unitPriceMinor: totalPrice * 100, // Convert to minor units (yen)
-            taxMinor: Math.floor(totalPrice * 10), // 10% tax in minor units
-            totalMinor: Math.floor(totalPrice * 110), // Total with tax in minor units
+            taxMinor: 0, // Tax included in price
+            totalMinor: totalPrice * 100, // Total (tax inclusive)
             meta: {
               seatId: id,
               sessionId: seatSession.id,
@@ -167,13 +198,19 @@ export async function DELETE(
         },
       })
 
-      // Update seat status
+      // Update order status to awaiting_payment since timer has stopped
+      await tx.order.update({
+        where: { id: seatSession.orderId },
+        data: { status: 'awaiting_payment' },
+      })
+
+      // Update seat status back to open
       await tx.seat.update({
         where: { id },
         data: { status: 'open' },
       })
 
-      // Check if table should be marked as available
+      // Check if table should be marked as dirty or remain seated
       const otherOccupiedSeats = await tx.seat.count({
         where: {
           tableId: seatSession.seat.tableId,
@@ -183,10 +220,35 @@ export async function DELETE(
       })
 
       if (otherOccupiedSeats === 0) {
+        // No other occupied seats, mark table as dirty (needs cleaning)
         await tx.table.update({
           where: { id: seatSession.seat.tableId },
-          data: { status: 'available' },
+          data: { status: 'dirty' },
         })
+
+        // Check for active game sessions on this table
+        const activeGameSessions = await tx.tableGameSession.findMany({
+          where: {
+            tableId: seatSession.seat.tableId,
+            endedAt: null,
+          },
+          include: {
+            game: true,
+          },
+        })
+
+        // End all active game sessions and make games available again
+        for (const gameSession of activeGameSessions) {
+          await tx.tableGameSession.update({
+            where: { id: gameSession.id },
+            data: { endedAt },
+          })
+
+          await tx.game.update({
+            where: { id: gameSession.gameId },
+            data: { available: true },
+          })
+        }
       }
 
       // Log order event

@@ -104,6 +104,7 @@ export async function getAllMenuItemAvailability() {
 
 /**
  * Deduct ingredients from stock when an order item is added
+ * Also increments the monthly sales counter for the menu item
  */
 export async function deductIngredientsForOrderItem(
   menuItemId: string,
@@ -121,8 +122,23 @@ export async function deductIngredientsForOrderItem(
     }
   })
 
-  if (!menuItem || menuItem.ingredients.length === 0) {
-    return // No ingredients to deduct
+  if (!menuItem) {
+    return // Menu item not found
+  }
+
+  // Increment monthly sales counter for the menu item
+  await prisma.menuItem.update({
+    where: { id: menuItemId },
+    data: {
+      monthlySales: {
+        increment: quantity
+      }
+    }
+  })
+
+  // If no ingredients defined, just track the sale
+  if (menuItem.ingredients.length === 0) {
+    return
   }
 
   const stockMovements = []
@@ -174,6 +190,7 @@ export async function deductIngredientsForOrderItem(
 
 /**
  * Return ingredients to stock when an order item is removed
+ * Also decrements the monthly sales counter for the menu item
  */
 export async function returnIngredientsForOrderItem(
   menuItemId: string,
@@ -191,7 +208,21 @@ export async function returnIngredientsForOrderItem(
     }
   })
 
-  if (!menuItem || menuItem.ingredients.length === 0) {
+  if (!menuItem) {
+    return // Menu item not found
+  }
+
+  // Decrement monthly sales counter for the menu item
+  await prisma.menuItem.update({
+    where: { id: menuItemId },
+    data: {
+      monthlySales: {
+        decrement: quantity
+      }
+    }
+  })
+
+  if (menuItem.ingredients.length === 0) {
     return // No ingredients to return
   }
 

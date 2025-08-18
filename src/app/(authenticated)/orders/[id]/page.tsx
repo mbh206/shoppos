@@ -11,6 +11,7 @@ type OrderItem = {
   taxMinor: number
   totalMinor: number
   kind: string
+  meta?: any
 }
 
 type SeatSession = {
@@ -102,7 +103,6 @@ export default function OrderDetailPage({
   const handleAddItem = async (name: string, unitPrice: number, qty: number = 1, kind: string = 'fnb') => {
     try {
       const unitPriceMinor = unitPrice * 100
-      const taxMinor = Math.floor(unitPriceMinor * qty * 0.1)
 
       const response = await fetch(`/api/orders/${resolvedParams.id}/items`, {
         method: 'POST',
@@ -112,7 +112,7 @@ export default function OrderDetailPage({
           name,
           qty,
           unitPriceMinor,
-          taxMinor,
+          taxMinor: 0, // Tax included in price
         }),
       })
 
@@ -216,9 +216,10 @@ export default function OrderDetailPage({
               </div>
             )}
 
+            {/* Regular Items */}
             <div className="space-y-2 mb-4">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center py-2 border-b">
+              {order.items.filter(item => item.kind !== 'seat_time' && !item.meta?.isGame).map((item) => (
+                <div key={item.id} className="flex justify-between items-start py-2 border-b">
                   <div className="flex-1">
                     <div className="font-medium">{item.name}</div>
                     <div className="text-sm text-gray-500">
@@ -239,6 +240,72 @@ export default function OrderDetailPage({
                 </div>
               ))}
             </div>
+
+            {/* Games Played */}
+            {order.items.some(item => item.meta?.isGame) && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-purple-700 mb-2">Games Played</h3>
+                <div className="space-y-1">
+                  {order.items.filter(item => item.meta?.isGame).map((item) => (
+                    <div key={item.id} className="flex items-center gap-2 text-sm text-purple-600">
+                      <span>🎲</span>
+                      <span>{item.name.replace('Game: ', '')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Time Charges */}
+            {order.items.filter(item => item.kind === 'seat_time').map((item) => (
+              <div key={item.id} className="border-t pt-2 mb-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="font-medium">{item.name}</div>
+                    {item.meta && (
+                      <>
+                        <div className="text-xs text-gray-600 mt-1">
+                          Duration: {item.meta.durationMinutes} minutes
+                        </div>
+                        {item.meta.sessionId && order.seatSessions && (
+                          (() => {
+                            const session = order.seatSessions.find(s => s.id === item.meta.sessionId)
+                            if (session) {
+                              const startTime = new Date(session.startedAt)
+                              const endTime = session.endedAt ? new Date(session.endedAt) : new Date()
+                              return (
+                                <>
+                                  <div className="text-xs text-gray-600">
+                                    Start: {startTime.toLocaleString('ja-JP', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </div>
+                                  {session.endedAt && (
+                                    <div className="text-xs text-gray-600">
+                                      End: {endTime.toLocaleString('ja-JP', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </div>
+                                  )}
+                                </>
+                              )
+                            }
+                            return null
+                          })()
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <span className="font-medium">{formatMoney(item.totalMinor)}</span>
+                </div>
+              </div>
+            ))}
 
             <div className="border-t pt-4">
               <div className="flex justify-between text-lg font-semibold">

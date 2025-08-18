@@ -1,0 +1,638 @@
+Starting BGG data fetch...
+
+Found 113 games to update
+
+[1/113] Processing: Arborea
+  ⏭️  Already has BGG ID: 371077, skipping...
+[2/113] Processing: Arboretum
+  ⏭️  Already has BGG ID: 140934, skipping...
+[3/113] Processing: Architects of the West Kingdom
+  ⏭️  Already has BGG ID: 236457, skipping...
+[4/113] Processing: Atlas Lost Rise of the New Sovereigns
+  ⏭️  Already has BGG ID: 362598, skipping...
+[5/113] Processing: Axis & Allies & Zombies
+  ⏭️  Already has BGG ID: 246960, skipping...
+[6/113] Processing: Azul: Crystal Mosaic
+  Searching BGG for: Azul: Crystal Mosaic
+  ✓ Found match: Azul: Crystal Mosaic (BGG ID: 294345)
+  Fetching details for BGG ID: 294345
+  ⚠️  No details found for BGG ID: 294345
+[7/113] Processing: Bad Neighbors
+  ⏭️  Already has BGG ID: 139121, skipping...
+[8/113] Processing: Botany
+  ⏭️  Already has BGG ID: 380837, skipping...
+[9/113] Processing: Brass Birmingham
+  Searching BGG for: Brass Birmingham
+  ✓ Found match: Brass: Birmingham (BGG ID: 224517)
+  Fetching details for BGG ID: 224517
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[10/113] Processing: Bristol 1350
+  Searching BGG for: Bristol 1350
+  ✓ Found match: Bristol 1350 (BGG ID: 308989)
+  Fetching details for BGG ID: 308989
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[11/113] Processing: Bushido Breaker
+  Searching BGG for: Bushido Breaker
+  ✓ Found match: Bushido Breaker (BGG ID: 228742)
+  Fetching details for BGG ID: 228742
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[12/113] Processing: By Order of the Queen
+  Searching BGG for: By Order of the Queen
+  ✓ Found match: By Order of the Queen (BGG ID: 199357)
+  Fetching details for BGG ID: 199357
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[13/113] Processing: Call to Adventure
+  Searching BGG for: Call to Adventure
+  ✓ Found match: Call to Adventure (BGG ID: 238992)
+  Fetching details for BGG ID: 238992
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[14/113] Processing: Camp Pinetop
+  Searching BGG for: Camp Pinetop
+  ✓ Found match: Camp Pinetop (BGG ID: 282246)
+  Fetching details for BGG ID: 282246
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[15/113] Processing: Canvas
+  Searching BGG for: Canvas
+  ✓ Found match: Canvas (BGG ID: 81703)
+  Fetching details for BGG ID: 81703
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[16/113] Processing: Caral
+  Searching BGG for: Caral
+  ✓ Found match: Caral (BGG ID: 348325)
+  Fetching details for BGG ID: 348325
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[17/113] Processing: Carcassonne
+  Searching BGG for: Carcassonne
+  ✓ Found match: Carcassonne (BGG ID: 822)
+  Fetching details for BGG ID: 822
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[18/113] Processing: Cartographers: A Roll Player Tale
+  Searching BGG for: Cartographers: A Roll Player Tale
+  ✓ Found match: Cartographers: A Roll Player Tale (BGG ID: 263918)
+  Fetching details for BGG ID: 263918
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[19/113] Processing: Cascadia
+  Searching BGG for: Cascadia
+  ✓ Found match: Cascadia (BGG ID: 295947)
+  Fetching details for BGG ID: 295947
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[20/113] Processing: Catacombs Cubes
+  Searching BGG for: Catacombs Cubes
+  ✓ Found match: Catacombs Cubes (BGG ID: 260694)
+  Fetching details for BGG ID: 260694
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[21/113] Processing: Century
+  Searching BGG for: Century
+  ✓ Found match: 1600: The Iron Century (BGG ID: 178415)
+  Fetching details for BGG ID: 178415
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[22/113] Processing: Chicken
+  Searching BGG for: Chicken
+  ✓ Found match: Chicken (BGG ID: 128007)
+  Fetching details for BGG ID: 128007
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[23/113] Processing: Civilization A New Dawn
+  Searching BGG for: Civilization A New Dawn
+  ✓ Found match: Civilization: A New Dawn (BGG ID: 233247)
+  Fetching details for BGG ID: 233247
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[24/113] Processing: Cribbage
+  Searching BGG for: Cribbage
+  ✓ Found match: Cribbage (BGG ID: 2398)
+  Fetching details for BGG ID: 2398
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[25/113] Processing: Dawn of Ulos
+  Searching BGG for: Dawn of Ulos
+  ✓ Found match: Dawn of Ulos (BGG ID: 366790)
+  Fetching details for BGG ID: 366790
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[26/113] Processing: Deep Dive
+  Searching BGG for: Deep Dive
+  ✓ Found match: Deep Dive (BGG ID: 329828)
+  Fetching details for BGG ID: 329828
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[27/113] Processing: Detective: A Modern Crime Board Game
+  Searching BGG for: Detective: A Modern Crime Board Game
+  ✓ Found match: Detective: A Modern Crime Board Game (BGG ID: 223321)
+  Fetching details for BGG ID: 223321
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[28/113] Processing: Dice Throne: Adventures
+  Searching BGG for: Dice Throne: Adventures
+  ✓ Found match: Dice Throne Adventures (BGG ID: 281332)
+  Fetching details for BGG ID: 281332
+  ⚠️  No details found for BGG ID: 281332
+[29/113] Processing: Dice Throne: Marvel
+  Searching BGG for: Dice Throne: Marvel
+  ✓ Found match: Marvel Dice Throne (BGG ID: 348406)
+  Fetching details for BGG ID: 348406
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[30/113] Processing: Dice Throne: Marvel X-Men
+  Searching BGG for: Dice Throne: Marvel X-Men
+  ✓ Found match: Marvel Dice Throne: X-Men (BGG ID: 403494)
+  Fetching details for BGG ID: 403494
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[31/113] Processing: Dice Throne: Missions
+  Searching BGG for: Dice Throne: Missions
+  ✓ Found match: Marvel Dice Throne Missions (BGG ID: 403495)
+  Fetching details for BGG ID: 403495
+  ⚠️  No details found for BGG ID: 403495
+[32/113] Processing: Dice Throne: Season One
+  Searching BGG for: Dice Throne: Season One
+  ✓ Found match: Dice Throne: Season One (BGG ID: 216734)
+  Fetching details for BGG ID: 216734
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[33/113] Processing: Dice Throne: Season Two – Battle Chest
+  Searching BGG for: Dice Throne: Season Two – Battle Chest
+  ✓ Found match: Dice Throne: Season Two – Battle Chest (BGG ID: 244271)
+  Fetching details for BGG ID: 244271
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[34/113] Processing: Dixit
+  Searching BGG for: Dixit
+  ✓ Found match: Dixit (BGG ID: 39856)
+  Fetching details for BGG ID: 39856
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[35/113] Processing: Dog Park
+  Searching BGG for: Dog Park
+  ✓ Found match: Dog Park (BGG ID: 331401)
+  Fetching details for BGG ID: 331401
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[36/113] Processing: Enchanters
+  Searching BGG for: Enchanters
+  ✓ Found match: Enchanters (BGG ID: 198138)
+  Fetching details for BGG ID: 198138
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[37/113] Processing: Enchanters: Odyssey
+  Searching BGG for: Enchanters: Odyssey
+  ✓ Found match: Enchanters: Odyssey (BGG ID: 283029)
+  Fetching details for BGG ID: 283029
+  ⚠️  No details found for BGG ID: 283029
+[38/113] Processing: Enchanters: Overlords
+  Searching BGG for: Enchanters: Overlords
+  ✓ Found match: Enchanters: Overlords (BGG ID: 252688)
+  Fetching details for BGG ID: 252688
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[39/113] Processing: Everdell
+  Searching BGG for: Everdell
+  ✓ Found match: Everdell (BGG ID: 199792)
+  Fetching details for BGG ID: 199792
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[40/113] Processing: Fit to Print
+  Searching BGG for: Fit to Print
+  ✓ Found match: Fit to Print (BGG ID: 352574)
+  Fetching details for BGG ID: 352574
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[41/113] Processing: Fluxx Jumanji
+  Searching BGG for: Fluxx Jumanji
+  ✓ Found match: Jumanji Fluxx (BGG ID: 272542)
+  Fetching details for BGG ID: 272542
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[42/113] Processing: Fluxx Marvel
+  Searching BGG for: Fluxx Marvel
+  ✓ Found match: Marvel Fluxx (BGG ID: 272541)
+  Fetching details for BGG ID: 272541
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[43/113] Processing: Forbidden Desert
+  Searching BGG for: Forbidden Desert
+  ✓ Found match: Forbidden Desert (BGG ID: 136063)
+  Fetching details for BGG ID: 136063
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[44/113] Processing: Founders of Gloomhaven
+  Searching BGG for: Founders of Gloomhaven
+  ✓ Found match: Founders of Gloomhaven (BGG ID: 214032)
+  Fetching details for BGG ID: 214032
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[45/113] Processing: Frosthaven
+  Searching BGG for: Frosthaven
+  ✓ Found match: Frosthaven (BGG ID: 295770)
+  Fetching details for BGG ID: 295770
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[46/113] Processing: Funkoverse Strategy Game: Harry Potter 100
+  Searching BGG for: Funkoverse Strategy Game: Harry Potter 100
+  ✓ Found match: Funkoverse Strategy Game: Harry Potter 100 (BGG ID: 292032)
+  Fetching details for BGG ID: 292032
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[47/113] Processing: Galaxy Trucker
+  Searching BGG for: Galaxy Trucker
+  ✓ Found match: Galaxy Trucker (BGG ID: 31481)
+  Fetching details for BGG ID: 31481
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[48/113] Processing: Glen More II: Chronicles
+  Searching BGG for: Glen More II: Chronicles
+  ✓ Found match: Glen More II: Chronicles (BGG ID: 265188)
+  Fetching details for BGG ID: 265188
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[49/113] Processing: Gloomhaven
+  Searching BGG for: Gloomhaven
+  ✓ Found match: Gloomhaven (BGG ID: 174430)
+  Fetching details for BGG ID: 174430
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[50/113] Processing: Gloomhaven Mini
+  Searching BGG for: Gloomhaven Mini
+  ⚠️  No results found for: Gloomhaven Mini
+[51/113] Processing: Gloomhaven: Jaws of the Lion
+  Searching BGG for: Gloomhaven: Jaws of the Lion
+  ✓ Found match: Gloomhaven: Jaws of the Lion (BGG ID: 291457)
+  Fetching details for BGG ID: 291457
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[52/113] Processing: Great Western Trail
+  Searching BGG for: Great Western Trail
+  ✓ Found match: Great Western Trail (BGG ID: 193738)
+  Fetching details for BGG ID: 193738
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[53/113] Processing: Harvest
+  Searching BGG for: Harvest
+  ✓ Found match: Harvest (BGG ID: 15390)
+  Fetching details for BGG ID: 15390
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[54/113] Processing: Hexpanse
+  Searching BGG for: Hexpanse
+  ✓ Found match: Hexpanse (BGG ID: 204143)
+  Fetching details for BGG ID: 204143
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[55/113] Processing: Hollywood
+  Searching BGG for: Hollywood
+  ✓ Found match: Hollywood (BGG ID: 14564)
+  Fetching details for BGG ID: 14564
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[56/113] Processing: King of Tokyo
+  Searching BGG for: King of Tokyo
+  ✓ Found match: King of Tokyo (BGG ID: 70323)
+  Fetching details for BGG ID: 70323
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[57/113] Processing: Let's Go! To Japan
+  Searching BGG for: Let's Go! To Japan
+  ✓ Found match: Let's Go! To Japan (BGG ID: 368173)
+  Fetching details for BGG ID: 368173
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[58/113] Processing: Libertalia: Winds of Galecrest
+  Searching BGG for: Libertalia: Winds of Galecrest
+  ✓ Found match: Libertalia: Winds of Galecrest (BGG ID: 356033)
+  Fetching details for BGG ID: 356033
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[59/113] Processing: Little Town Builders
+  Searching BGG for: Little Town Builders
+  ✓ Found match: Little Town Builders (BGG ID: 241266)
+  Fetching details for BGG ID: 241266
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[60/113] Processing: Lords of Waterdeep
+  Searching BGG for: Lords of Waterdeep
+  ✓ Found match: Lords of Waterdeep (BGG ID: 110327)
+  Fetching details for BGG ID: 110327
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[61/113] Processing: Lost Ruins of Arnak
+  Searching BGG for: Lost Ruins of Arnak
+  ✓ Found match: Lost Ruins of Arnak (BGG ID: 312484)
+  Fetching details for BGG ID: 312484
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[62/113] Processing: Machi Koro
+  Searching BGG for: Machi Koro
+  ✓ Found match: Machi Koro (BGG ID: 143884)
+  Fetching details for BGG ID: 143884
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[63/113] Processing: Melee
+  Searching BGG for: Melee
+  ✓ Found match: Melee (BGG ID: 3464)
+  Fetching details for BGG ID: 3464
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[64/113] Processing: Mr. Jack Pocket
+  Searching BGG for: Mr. Jack Pocket
+  ✓ Found match: Mr. Jack Pocket (BGG ID: 72287)
+  Fetching details for BGG ID: 72287
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[65/113] Processing: Munchkin Deluxe
+  Searching BGG for: Munchkin Deluxe
+  ✓ Found match: Munchkin Deluxe (BGG ID: 1927)
+  Fetching details for BGG ID: 1927
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[66/113] Processing: Namiji
+  Searching BGG for: Namiji
+  ✓ Found match: Namiji (BGG ID: 275215)
+  Fetching details for BGG ID: 275215
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[67/113] Processing: Night Parade
+  Searching BGG for: Night Parade
+  ✓ Found match: Night Parade Hanafuda (BGG ID: 5451)
+  Fetching details for BGG ID: 5451
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[68/113] Processing: Ninja Sloths
+  Searching BGG for: Ninja Sloths
+  ✓ Found match: Ninja Sloths (BGG ID: 385797)
+  Fetching details for BGG ID: 385797
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[69/113] Processing: Ninjitsu!
+  Searching BGG for: Ninjitsu!
+  ✓ Found match: Ninjitsu! (BGG ID: 230064)
+  Fetching details for BGG ID: 230064
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[70/113] Processing: Orleans
+  Searching BGG for: Orleans
+  ✓ Found match: All About New Orleans (BGG ID: 119303)
+  Fetching details for BGG ID: 119303
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[71/113] Processing: PARKS
+  Searching BGG for: PARKS
+  ✓ Found match: Parks (BGG ID: 196238)
+  Fetching details for BGG ID: 196238
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[72/113] Processing: Pan Am
+  Searching BGG for: Pan Am
+  ✓ Found match: Pan Am (BGG ID: 303057)
+  Fetching details for BGG ID: 303057
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[73/113] Processing: Parks Memories
+  Searching BGG for: Parks Memories
+  ✓ Found match: PARKS Memories: Boxed Set (BGG ID: 356624)
+  Fetching details for BGG ID: 356624
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[74/113] Processing: Patchwork
+  Searching BGG for: Patchwork
+  ✓ Found match: Patchwork (BGG ID: 163412)
+  Fetching details for BGG ID: 163412
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[75/113] Processing: Point City
+  Searching BGG for: Point City
+  ✓ Found match: Point City (BGG ID: 368017)
+  Fetching details for BGG ID: 368017
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[76/113] Processing: Railways of the Lost Atlas
+  Searching BGG for: Railways of the Lost Atlas
+  ✓ Found match: Railways of the Lost Atlas (BGG ID: 365357)
+  Fetching details for BGG ID: 365357
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[77/113] Processing: Redwood
+  Searching BGG for: Redwood
+  ✓ Found match: Redwood (BGG ID: 359962)
+  Fetching details for BGG ID: 359962
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[78/113] Processing: Robinson Crusoe: Adventures on the Cursed Island
+  Searching BGG for: Robinson Crusoe: Adventures on the Cursed Island
+  ✓ Found match: Robinson Crusoe: Adventures on the Cursed Island (BGG ID: 121921)
+  Fetching details for BGG ID: 121921
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[79/113] Processing: Roll Player
+  Searching BGG for: Roll Player
+  ✓ Found match: Roll Player (BGG ID: 169426)
+  Fetching details for BGG ID: 169426
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[80/113] Processing: Samurai Gardener
+  Searching BGG for: Samurai Gardener
+  ✓ Found match: Samurai Gardener (BGG ID: 150533)
+  Fetching details for BGG ID: 150533
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[81/113] Processing: Scythe
+  Searching BGG for: Scythe
+  ✓ Found match: Scythe (BGG ID: 169786)
+  Fetching details for BGG ID: 169786
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[82/113] Processing: Scythe: Invaders from Afar
+  Searching BGG for: Scythe: Invaders from Afar
+  ✓ Found match: Scythe: Invaders from Afar (BGG ID: 199727)
+  Fetching details for BGG ID: 199727
+  ⚠️  No details found for BGG ID: 199727
+[83/113] Processing: Scythe: The Wind Gambit
+  Searching BGG for: Scythe: The Wind Gambit
+  ✓ Found match: Scythe: The Wind Gambit (BGG ID: 223555)
+  Fetching details for BGG ID: 223555
+  ⚠️  No details found for BGG ID: 223555
+[84/113] Processing: Sherlock Holmes Consulting Detective: The Thames Murders & Other Cases
+  Searching BGG for: Sherlock Holmes Consulting Detective: The Thames Murders & Other Cases
+  ✓ Found match: Sherlock Holmes Consulting Detective: The Thames Murders & Other Cases (BGG ID: 2511)
+  Fetching details for BGG ID: 2511
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[85/113] Processing: Sid Meier's Civilization: A New Dawn
+  Searching BGG for: Sid Meier's Civilization: A New Dawn
+  ⚠️  No results found for: Sid Meier's Civilization: A New Dawn
+[86/113] Processing: Sleeping Gods
+  Searching BGG for: Sleeping Gods
+  ✓ Found match: Sleeping Gods (BGG ID: 255984)
+  Fetching details for BGG ID: 255984
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[87/113] Processing: Space Parks
+  Searching BGG for: Space Parks
+  ⚠️  No results found for: Space Parks
+[88/113] Processing: Spirit Island
+  Searching BGG for: Spirit Island
+  ✓ Found match: Spirit Island (BGG ID: 162886)
+  Fetching details for BGG ID: 162886
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[89/113] Processing: Star Realms: Frontiers
+  Searching BGG for: Star Realms: Frontiers
+  ✓ Found match: Star Realms: Frontiers (BGG ID: 230253)
+  Fetching details for BGG ID: 230253
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[90/113] Processing: Star Wars: Outer Rim
+  Searching BGG for: Star Wars: Outer Rim
+  ✓ Found match: Star Wars: Outer Rim (BGG ID: 271896)
+  Fetching details for BGG ID: 271896
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[91/113] Processing: Star Wars: Shatterpoint
+  Searching BGG for: Star Wars: Shatterpoint
+  ✓ Found match: Star Wars: Shatterpoint (BGG ID: 374562)
+  Fetching details for BGG ID: 374562
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[92/113] Processing: Star Wars: The Clone Wars - A Pandemic System Game
+  Searching BGG for: Star Wars: The Clone Wars - A Pandemic System Game
+  ⚠️  No results found for: Star Wars: The Clone Wars - A Pandemic System Game
+[93/113] Processing: Sub Terra: Collector's Edition
+  Searching BGG for: Sub Terra: Collector's Edition
+  ✓ Found match: Sub Terra: Collector's Edition (BGG ID: 215946)
+  Fetching details for BGG ID: 215946
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[94/113] Processing: Sushi Go!
+  Searching BGG for: Sushi Go!
+  ✓ Found match: Sushi Go! (BGG ID: 133473)
+  Fetching details for BGG ID: 133473
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[95/113] Processing: Takenoko
+  Searching BGG for: Takenoko
+  ✓ Found match: Takenoko (BGG ID: 70919)
+  Fetching details for BGG ID: 70919
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[96/113] Processing: Tao Long: The Way of the Dragon
+  Searching BGG for: Tao Long: The Way of the Dragon
+  ✓ Found match: Tao Long: The Way of the Dragon (BGG ID: 215613)
+  Fetching details for BGG ID: 215613
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[97/113] Processing: Tapestry
+  Searching BGG for: Tapestry
+  ✓ Found match: Tapestry (BGG ID: 18585)
+  Fetching details for BGG ID: 18585
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[98/113] Processing: Terraforming Mars
+  Searching BGG for: Terraforming Mars
+  ✓ Found match: Terraforming Mars (BGG ID: 167791)
+  Fetching details for BGG ID: 167791
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[99/113] Processing: Terraforming Mars: The Dice Game
+  Searching BGG for: Terraforming Mars: The Dice Game
+  ✓ Found match: Terraforming Mars: The Dice Game (BGG ID: 296108)
+  Fetching details for BGG ID: 296108
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[100/113] Processing: The Search for Planet X
+  Searching BGG for: The Search for Planet X
+  ✓ Found match: The Search for Planet X (BGG ID: 279537)
+  Fetching details for BGG ID: 279537
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[101/113] Processing: Thebes
+  Searching BGG for: Thebes
+  ✓ Found match: Thebes (BGG ID: 113650)
+  Fetching details for BGG ID: 113650
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[102/113] Processing: Ticket to Ride
+  Searching BGG for: Ticket to Ride
+  ✓ Found match: Ticket to Ride (BGG ID: 9209)
+  Fetching details for BGG ID: 9209
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[103/113] Processing: Ticket to Ride Map Collection: Volume 1 – Team Asia & Legendary Asia
+  Searching BGG for: Ticket to Ride Map Collection: Volume 1 – Team Asia & Legendary Asia
+  ⚠️  No results found for: Ticket to Ride Map Collection: Volume 1 – Team Asia & Legendary Asia
+[104/113] Processing: Tiny Epic Dinosaurs
+  Searching BGG for: Tiny Epic Dinosaurs
+  ✓ Found match: Tiny Epic Dinosaurs (BGG ID: 291508)
+  Fetching details for BGG ID: 291508
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[105/113] Processing: Tiny Epic Vikings
+  Searching BGG for: Tiny Epic Vikings
+  ✓ Found match: Tiny Epic Vikings (BGG ID: 360896)
+  Fetching details for BGG ID: 360896
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[106/113] Processing: Tokaido
+  Searching BGG for: Tokaido
+  ✓ Found match: Tokaido (BGG ID: 123540)
+  Fetching details for BGG ID: 123540
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[107/113] Processing: Tokaido: Crossroads
+  Searching BGG for: Tokaido: Crossroads
+  ✓ Found match: Tokaido: Crossroads (BGG ID: 144384)
+  Fetching details for BGG ID: 144384
+  ⚠️  No details found for BGG ID: 144384
+[108/113] Processing: Too Many Bones
+  Searching BGG for: Too Many Bones
+  ✓ Found match: Too Many Bones (BGG ID: 192135)
+  Fetching details for BGG ID: 192135
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[109/113] Processing: Tortuga 1667
+  Searching BGG for: Tortuga 1667
+  ✓ Found match: Tortuga 1667 (BGG ID: 218530)
+  Fetching details for BGG ID: 218530
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[110/113] Processing: Twilight Struggle
+  Searching BGG for: Twilight Struggle
+  ✓ Found match: Twilight Struggle (BGG ID: 12333)
+  Fetching details for BGG ID: 12333
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[111/113] Processing: Tzolk'in: The Mayan Calendar
+  Searching BGG for: Tzolk'in: The Mayan Calendar
+  ✓ Found match: Tzolk'in: The Mayan Calendar (BGG ID: 126163)
+  Fetching details for BGG ID: 126163
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[112/113] Processing: Weirdwood Manor
+  Searching BGG for: Weirdwood Manor
+  ✓ Found match: Weirdwood Manor (BGG ID: 359601)
+  Fetching details for BGG ID: 359601
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+[113/113] Processing: Wingspan
+  Searching BGG for: Wingspan
+  ✓ Found match: Wingspan (BGG ID: 266192)
+  Fetching details for BGG ID: 266192
+  ✓ Fetched details successfully
+  ✅ Updated successfully!
+
+========================================
+✅ Successfully updated: 101 games
+❌ Failed to update: 12 games
+========================================
+

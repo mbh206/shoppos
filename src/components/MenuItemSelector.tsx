@@ -83,11 +83,11 @@ export default function MenuItemSelector({ orderId, onItemsAdded, onClose }: Men
       const unitPrice = item.customerPrice
       const tax = Math.floor(unitPrice * 0.1) // 10% tax
       
-      await fetch(`/api/orders/${orderId}/items`, {
+      const response = await fetch(`/api/orders/${orderId}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          kind: 'regular',
+          kind: 'fnb', // Changed from 'regular' to match OrderItemKind enum
           name: item.name,
           qty: 1,
           unitPriceMinor: unitPrice,
@@ -100,6 +100,18 @@ export default function MenuItemSelector({ orderId, onItemsAdded, onClose }: Men
           }
         })
       })
+
+      if (!response.ok) {
+        const error = await response.json()
+        console.error('Failed to add item:', error)
+        if (error.details) {
+          // If there are stock issues, show detailed message
+          alert(`Cannot add item:\n${error.details.join('\n')}`)
+        } else {
+          alert(error.error || 'Failed to add item to order')
+        }
+        return
+      }
 
       onItemsAdded?.()
     } catch (error) {

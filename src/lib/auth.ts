@@ -11,7 +11,7 @@ declare module 'next-auth' {
       id: string
       email: string
       name: string | null
-      role: 'admin' | 'host' | 'server' | 'kitchen'
+      role: 'admin' | 'manager' | 'employee'
     }
   }
   
@@ -19,7 +19,7 @@ declare module 'next-auth' {
     id: string
     email: string
     name: string | null
-    role: 'admin' | 'host' | 'server' | 'kitchen'
+    role: 'admin' | 'manager' | 'employee'
   }
 }
 
@@ -75,7 +75,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string
-        session.user.role = token.role as 'admin' | 'host' | 'server' | 'kitchen'
+        session.user.role = token.role as 'admin' | 'manager' | 'employee'
       }
       return session
     },

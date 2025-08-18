@@ -62,6 +62,12 @@ export async function POST(
       data: { status: 'seated' },
     })
 
+    // Since there's no timer, immediately set order to awaiting_payment
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'awaiting_payment' },
+    })
+
     // Log order event
     await prisma.orderEvent.create({
       data: {
@@ -154,6 +160,50 @@ export async function DELETE(
           where: { id: seatSession.seat.tableId },
           data: { status: 'dirty' },
         })
+
+        // Check for active game sessions on this table
+        const activeGameSessions = await tx.tableGameSession.findMany({
+          where: {
+            tableId: seatSession.seat.tableId,
+            endedAt: null,
+          },
+          include: {
+            game: true,
+          },
+        })
+
+        // End all active game sessions and make games available again
+        for (const gameSession of activeGameSessions) {
+          await tx.tableGameSession.update({
+            where: { id: gameSession.id },
+            data: { endedAt },
+          })
+
+          await tx.game.update({
+            where: { id: gameSession.gameId },
+            data: { available: true },
+          })
+
+          // Add game info to the order as a note
+          const gameNote = `Game played: ${gameSession.game.name}`
+          await tx.orderItem.create({
+            data: {
+              orderId: seatSession.orderId,
+              kind: 'game',
+              name: gameSession.game.name,
+              qty: 1,
+              unitPriceMinor: 0, // Games are free to play
+              taxMinor: 0,
+              totalMinor: 0,
+              meta: {
+                gameId: gameSession.gameId,
+                sessionId: gameSession.id,
+                startedAt: gameSession.startedAt.toISOString(),
+                endedAt: endedAt.toISOString(),
+              },
+            },
+          })
+        }
       }
 
       // Log order event

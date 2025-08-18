@@ -9,9 +9,8 @@ export default async function FloorPage() {
     redirect('/login')
   }
 
-  if (!['admin', 'host', 'server'].includes(session.user.role)) {
-    redirect('/dashboard')
-  }
+  // Allow all authenticated users to access floor map
+  // Floor map is a core POS feature needed by all staff
 
   return (
     <div className="min-h-screen bg-gray-50">

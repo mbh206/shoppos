@@ -13,22 +13,34 @@ model User {
   name           String?
   role           UserRole
   hashedPassword String
+  
+  // Employee fields
+  employeeId     String?     @unique
+  hireDate       DateTime?
+  position       String?
+  
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+  
+  // Relations
   ordersOpened   Order[]     @relation("OpenedBy")
   ordersClosed   Order[]     @relation("ClosedBy")
+  profile        EmployeeProfile?
+  timeEntries    TimeEntry[]
+  adjustedEntries TimeEntry[] @relation("AdjustedBy")
 }
 
 enum UserRole {
   admin
-  host
-  server
-  kitchen
+  manager
+  employee
 }
 
 model Customer {
   id               String        @id @default(cuid())
   squareCustomerId String?       @unique
+  firstName        String?
+  lastName         String?
   displayName      String?
   phone            String?
   email            String?
@@ -95,6 +107,7 @@ model Seat {
 enum SeatStatus {
   open
   occupied
+  dirty
   closed
 }
 
@@ -110,6 +123,7 @@ model Order {
   openedAt        DateTime         @default(now())
   closedAt        DateTime?
   notes           String?
+  meta            Json?
   customer        Customer?        @relation(fields: [customerId], references: [id])
   payer           Customer?        @relation("Payer", fields: [payerCustomerId], references: [id])
   openedBy        User             @relation("OpenedBy", fields: [openedByUserId], references: [id])
@@ -174,6 +188,7 @@ model SeatSession {
   endedAt       DateTime?
   billedMinutes Int       @default(0)
   billedItemId  String?
+  meta          Json?
   seat          Seat      @relation(fields: [seatId], references: [id], onDelete: Cascade)
   order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   customer      Customer? @relation(fields: [customerId], references: [id])
@@ -343,6 +358,8 @@ model MenuItem {
   isAvailable       Boolean             @default(true)
   sortOrder         Int                 @default(0)
   imageUrl          String?
+  monthlySales      Int                 @default(0) // Monthly sales in units
+  expectedWaste     Float               @default(0) // Expected waste percentage (0-100)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   category          MenuCategory?       @relation(fields: [categoryId], references: [id])
@@ -414,10 +431,31 @@ model StockMovement {
   @@index([referenceId])
 }
 
+model Supplier {
+  id              String              @id @default(cuid())
+  name            String              @unique
+  contactName     String?
+  email           String?
+  phone           String?
+  address         String?
+  website         String?
+  paymentTerms    String?             // e.g., "Net 30", "Due on receipt"
+  deliveryDays    String?             // e.g., "Mon, Wed, Fri"
+  minimumOrder    Int?                // Minimum order amount in minor units
+  notes           String?
+  isActive        Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  purchaseOrders  PurchaseOrder[]
+  
+  @@index([name])
+}
+
 model PurchaseOrder {
   id              String              @id @default(cuid())
   orderNumber     String              @unique
-  supplier        String
+  supplierId      String?
+  supplierName    String              // Keep for backwards compatibility
   status          PurchaseOrderStatus @default(draft)
   orderDate       DateTime            @default(now())
   expectedDate    DateTime?
@@ -427,15 +465,19 @@ model PurchaseOrder {
   shipping        Int                 @default(0)
   total           Int                 @default(0)
   notes           String?
+  invoiceNumber   String?             // Supplier's invoice number
+  paymentStatus   String?             // "pending", "paid", "partial"
+  paymentDate     DateTime?
   createdBy       String?
   receivedBy      String?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
+  supplier        Supplier?           @relation(fields: [supplierId], references: [id])
   items           PurchaseOrderItem[]
   
   @@index([status])
   @@index([orderDate])
-  @@index([supplier])
+  @@index([supplierId])
 }
 
 model PurchaseOrderItem {
@@ -452,6 +494,56 @@ model PurchaseOrderItem {
   
   @@index([purchaseOrderId])
   @@index([ingredientId])
+}
+
+model Supply {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  category        String?         // e.g., "Packaging", "Cleaning", "Office"
+  unit            String          // e.g., "pack", "box", "roll"
+  costPerUnit     Int             // Cost per unit in minor units
+  stockQuantity   Float           @default(0)
+  minStock        Float           @default(0)
+  maxStock        Float?
+  reorderPoint    Float?
+  reorderQuantity Float?
+  supplier        String?
+  supplierSKU     String?
+  leadTimeDays    Int             @default(1)
+  lastRestocked   DateTime?
+  notes           String?
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([name])
+  @@index([category])
+}
+
+model RetailItem {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  nameJa          String?         // Japanese name
+  barcode         String?         @unique
+  category        String?         // e.g., "Snacks", "Drinks", "Merchandise"
+  costPrice       Int             // Purchase price in minor units
+  retailPrice     Int             // Selling price in minor units
+  stockQuantity   Float           @default(0)
+  minStock        Float           @default(0)
+  maxStock        Float?
+  reorderPoint    Float?
+  reorderQuantity Float?
+  supplier        String?
+  supplierSKU     String?
+  imageUrl        String?
+  description     String?
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([name])
+  @@index([barcode])
+  @@index([category])
 }
 
 model InventorySnapshot {
@@ -519,6 +611,18 @@ model Game {
   description    String?         @db.Text
   imageUrl       String?
   timesPlayed    Int             @default(0)
+  
+  // BGG Data
+  bggId          Int?            // BoardGameGeek ID
+  bggRating      Float?          // BGG average rating (1-10)
+  bggWeight      Float?          // BGG complexity weight (1-5)
+  yearPublished  Int?            // Year the game was published
+  designer       String?         // Game designer(s)
+  publisher      String?         // Game publisher(s)
+  categories     String[]        // BGG categories (e.g., "Strategy", "Party")
+  mechanics      String[]        // BGG mechanics (e.g., "Worker Placement")
+  thumbnailUrl   String?         // Small image URL from BGG
+  
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   
@@ -543,4 +647,89 @@ model TableGameSession {
   @@index([tableId])
   @@index([gameId])
   @@index([startedAt])
+}
+
+// Employee Management Models
+
+enum PayType {
+  hourly
+  salary
+}
+
+model EmployeeProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Info
+  phoneNumber       String?
+  emergencyContact  String?
+  emergencyPhone    String?
+  address           String?
+  
+  // Pay Information
+  payType           PayType  @default(hourly)
+  payRate           Int      // in minor units (yen)
+  hourlyRate        Float?   // hourly rate in yen (major units)
+  overtimeRate      Int?     // typically 125% of regular rate
+  nightRate         Int?     // typically 135% of regular rate
+  
+  // Tax Info (Japan-specific)
+  socialInsuranceNo String?  // 社会保険番号
+  taxWithholding    Int?     // 源泉徴収税額
+  dependents        Int      @default(0)
+  
+  // Benefits
+  paidTimeOff       Float    @default(0) // in days
+  sickDays          Float    @default(0) // in days
+  
+  // Banking
+  bankName          String?
+  bankBranch        String?
+  accountNumber     String?  // Should be encrypted in production
+  accountName       String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+enum TimeEntryStatus {
+  active
+  adjusted
+  approved
+  disputed
+}
+
+model TimeEntry {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id])
+  
+  clockIn      DateTime
+  clockOut     DateTime?
+  breakStart   DateTime?
+  breakEnd     DateTime?
+  
+  // Calculated fields (in hours)
+  regularHours Float           @default(0)
+  overtimeHours Float          @default(0)
+  nightHours   Float           @default(0) // 22:00-05:00 in Japan
+  totalHours   Float           @default(0)
+  
+  // Admin adjustments
+  adjustedById String?         // userId who made adjustment
+  adjustedBy   User?           @relation("AdjustedBy", fields: [adjustedById], references: [id])
+  adjustNote   String?         // Reason for adjustment
+  originalIn   DateTime?       // Store original if edited
+  originalOut  DateTime?       // Store original if edited
+  
+  status       TimeEntryStatus @default(active)
+  
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  
+  @@index([userId, clockIn])
+  @@index([status])
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import MergeBillsModal from '@/components/MergeBillsModal'
 
 type OrderItem = {
   id: string
@@ -34,9 +35,10 @@ type Order = {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [showMergeBills, setShowMergeBills] = useState(false)
   const searchParams = useSearchParams()
-  const initialFilter = (searchParams.get('filter') || 'open') as 'all' | 'open' | 'paid'
-  const [filter, setFilter] = useState<'all' | 'open' | 'paid'>(initialFilter)
+  const initialFilter = (searchParams.get('filter') || 'unpaid') as 'all' | 'unpaid' | 'active' | 'paid'
+  const [filter, setFilter] = useState<'all' | 'unpaid' | 'active' | 'paid'>(initialFilter)
   const router = useRouter()
 
   useEffect(() => {
@@ -47,7 +49,14 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const params = filter === 'all' ? '' : `?status=${filter}`
+      let params = ''
+      if (filter === 'active') {
+        params = '?status=open'
+      } else if (filter === 'unpaid') {
+        params = '?status=awaiting_payment'
+      } else if (filter === 'paid') {
+        params = '?status=paid'
+      }
       const response = await fetch(`/api/orders${params}`)
       const data = await response.json()
       setOrders(data)
@@ -64,7 +73,10 @@ export default function OrdersPage() {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleTimeString('ja-JP', { 
+    return date.toLocaleString('ja-JP', { 
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
       hour: '2-digit', 
       minute: '2-digit' 
     })
@@ -108,7 +120,7 @@ export default function OrdersPage() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Orders</h1>
+          <h1 className="text-2xl font-bold">Transactions</h1>
           <div className="flex gap-4">
             <div className="flex gap-2">
               <button
@@ -122,26 +134,42 @@ export default function OrdersPage() {
                 All
               </button>
               <button
-                onClick={() => setFilter('open')}
+                onClick={() => setFilter('active')}
                 className={`px-4 py-2 rounded ${
-                  filter === 'open' 
-                    ? 'bg-blue-500 text-white' 
+                  filter === 'active' 
+                    ? 'bg-orange-500 text-white' 
                     : 'bg-white border border-gray-300'
                 }`}
               >
-                Open
+                Active
+              </button>
+              <button
+                onClick={() => setFilter('unpaid')}
+                className={`px-4 py-2 rounded ${
+                  filter === 'unpaid' 
+                    ? 'bg-yellow-500 text-white' 
+                    : 'bg-white border border-gray-300'
+                }`}
+              >
+                Unpaid
               </button>
               <button
                 onClick={() => setFilter('paid')}
                 className={`px-4 py-2 rounded ${
                   filter === 'paid' 
-                    ? 'bg-blue-500 text-white' 
+                    ? 'bg-green-500 text-white' 
                     : 'bg-white border border-gray-300'
                 }`}
               >
                 Paid
               </button>
             </div>
+            <button
+              onClick={() => setShowMergeBills(true)}
+              className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+            >
+              Merge Bills
+            </button>
             <button
               onClick={handleCreateOrder}
               className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
@@ -170,22 +198,23 @@ export default function OrdersPage() {
                     <div className="text-sm text-gray-500">
                       {formatTime(order.openedAt)}
                     </div>
+                  {order.customer && (
+                    <div className="text-md text-blue-600 mb-2">
+                      {order.customer.displayName || 'Guest'}
+                    </div>
+                  )}
                   </div>
                   <span className={`px-2 py-1 rounded text-xs text-white ${
-                    order.status === 'open' ? 'bg-blue-500' :
+                    order.status === 'open' ? 'bg-orange-500' :
+                    order.status === 'awaiting_payment' ? 'bg-yellow-500' :
                     order.status === 'paid' ? 'bg-green-500' :
                     order.status === 'canceled' ? 'bg-red-500' :
                     'bg-gray-500'
                   }`}>
-                    {order.status}
+                    {order.status === 'awaiting_payment' ? 'unpaid' : order.status}
                   </span>
                 </div>
 
-                {order.customer && (
-                  <div className="text-sm text-gray-600 mb-2">
-                    {order.customer.displayName || 'Guest'}
-                  </div>
-                )}
 
                 <div className="space-y-1 mb-3">
                   {order.items.slice(0, 3).map((item) => (
@@ -208,6 +237,17 @@ export default function OrdersPage() {
                     <span>Total</span>
                     <span>{formatMoney(total)}</span>
                   </div>
+                  {order.status === 'awaiting_payment' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(`/checkout/${order.id}`)
+                      }}
+                      className="w-full mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium"
+                    >
+                      Checkout
+                    </button>
+                  )}
                 </div>
               </div>
             )
@@ -220,6 +260,16 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+
+      {showMergeBills && (
+        <MergeBillsModal
+          onClose={() => setShowMergeBills(false)}
+          onMergeComplete={() => {
+            setShowMergeBills(false)
+            fetchOrders()
+          }}
+        />
+      )}
     </div>
   )
 }

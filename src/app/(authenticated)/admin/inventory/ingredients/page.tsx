@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import IngredientModal from '@/components/IngredientModal'
+import Link from 'next/link'
 
 type Ingredient = {
   id: string
@@ -50,7 +51,7 @@ export default function IngredientsPage() {
   }
 
   const formatMoney = (minorUnits: number) => {
-    return `¥${(minorUnits / 100).toFixed(2)}`
+    return `¥${(minorUnits / 100)}`
   }
 
   const getStockStatus = (ingredient: Ingredient) => {
@@ -123,6 +124,12 @@ export default function IngredientsPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
+        <Link
+          href="/admin/inventory"
+          className="text-blue-500 hover:text-blue-700 mb-4 inline-block"
+        >
+          ← Back to Inventory
+        </Link>
         <h1 className="text-2xl font-bold mb-4">Ingredient Inventory</h1>
         
         {/* Summary Cards */}

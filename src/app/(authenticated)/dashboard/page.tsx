@@ -146,7 +146,6 @@ export default async function DashboardPage() {
       {/* Operations Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {/* Floor Map */}
-        {['admin', 'host', 'server'].includes(session.user.role) && (
           <Link href="/floor" className="block">
             <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center mb-4">
@@ -160,10 +159,8 @@ export default async function DashboardPage() {
               <p className="text-gray-600">Manage tables, seats, and timers</p>
             </div>
           </Link>
-        )}
 
         {/* Orders */}
-        {['admin', 'host', 'server'].includes(session.user.role) && (
           <Link href="/orders" className="block">
             <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center mb-4">
@@ -177,10 +174,9 @@ export default async function DashboardPage() {
               <p className="text-gray-600">View and manage all orders</p>
             </div>
           </Link>
-        )}
 
-        {/* Kitchen Display */}
-        {session.user.role === 'kitchen' && (
+        {/* Kitchen Display - Removed */}
+        {false && (
           <Link href="/kitchen" className="block">
             <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center mb-4">
@@ -284,7 +280,7 @@ export default async function DashboardPage() {
       </div> */}
 
       {/* Role-specific content */}
-      {session.user.role === 'kitchen' && (
+      {false && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Kitchen Status</h3>
           <p className="text-gray-600">
@@ -295,7 +291,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {['host', 'server'].includes(session.user.role) && (
+      {['manager', 'employee'].includes(session.user.role) && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Status</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">

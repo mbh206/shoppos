@@ -20,6 +20,7 @@
     "@prisma/client": "^6.13.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/serialport": "^8.0.5",
+    "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "date-fns": "^4.1.0",
     "escpos": "^3.0.0-alpha.6",
@@ -30,7 +31,8 @@
     "react-dom": "19.1.0",
     "serialport": "^12.0.0",
     "square": "^43.0.1",
-    "usb-detection": "^4.14.2"
+    "usb-detection": "^4.14.2",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
