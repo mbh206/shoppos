@@ -14,8 +14,20 @@ type Game = {
   maxPlayers: number
   duration: number
   complexity: string
+  complexityJa?: string | null
   setupTime: number
   description?: string | null
+  descriptionJa?: string | null
+  imageUrl?: string | null
+  thumbnailUrl?: string | null
+  bggId?: number | null
+  bggRating?: number | null
+  bggWeight?: number | null
+  yearPublished?: number | null
+  designer?: string | null
+  publisher?: string | null
+  categories?: string[]
+  mechanics?: string[]
   timesPlayed: number
   createdAt: string
   updatedAt: string
@@ -356,7 +368,10 @@ export default function GamesPage() {
                         game.complexity === 'hard' ? 'bg-orange-100 text-orange-800' :
                         'bg-red-100 text-red-800'
                       }`}>
-                        {formatComplexity(game.complexity)}
+                        <div>{formatComplexity(game.complexity)}</div>
+                        {game.complexityJa && (
+                          <div className="text-xs">{game.complexityJa}</div>
+                        )}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">

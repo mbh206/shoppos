@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
-import ConnectionStatus from '@/components/ConnectionStatus'
+// import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
+// import ConnectionStatus from '@/components/ConnectionStatus'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,8 +22,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
-        <ConnectionStatus />
-        <ServiceWorkerRegistration />
         {children}
       </body>
     </html>

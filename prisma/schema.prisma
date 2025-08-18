@@ -599,7 +599,7 @@ enum GameComplexity {
 model Game {
   id             String          @id @default(cuid())
   name           String
-  nameJa         String?         // Japanese name if applicable
+  nameJa         String?         // Japanese name
   location       String          // Shelf number, storage location
   available      Boolean         @default(true)
   type           GameType        @default(board_game)
@@ -607,8 +607,10 @@ model Game {
   maxPlayers     Int             @default(4)
   duration       Int             @default(60) // Typical play time in minutes
   complexity     GameComplexity  @default(medium)
+  complexityJa   String?         // Japanese complexity description
   setupTime      Int             @default(10) // Minutes to set up
   description    String?         @db.Text
+  descriptionJa  String?         @db.Text // Japanese description
   imageUrl       String?
   timesPlayed    Int             @default(0)
   

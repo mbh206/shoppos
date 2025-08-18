@@ -10,9 +10,10 @@ export default function ConnectionStatus() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'complete'>('idle')
 
   useEffect(() => {
-    // Check initial online status
-    setIsOnline(navigator.onLine)
-    setShowStatus(!navigator.onLine)
+    // Check initial online status - default to true if navigator.onLine is undefined
+    const initialOnline = typeof navigator !== 'undefined' ? navigator.onLine : true
+    setIsOnline(initialOnline)
+    setShowStatus(!initialOnline)
 
     // Listen for online/offline events
     const handleOnline = () => {
