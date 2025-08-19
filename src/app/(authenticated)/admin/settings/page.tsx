@@ -1,5 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import DatabaseBackup from '@/components/DatabaseBackup'
+import DatabaseRestore from '@/components/DatabaseRestore'
 
 export default async function AdminPage() {
   const session = await auth()
@@ -67,23 +69,11 @@ export default async function AdminPage() {
             </li>
             <li className="flex items-center gap-2">
               <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
-              Catalog Sync
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
-              Rental Management
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
               Event Ticketing
             </li>
             <li className="flex items-center gap-2">
               <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
               Customer Loyalty
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-gray-300 rounded-full"></span>
-              Offline Mode
             </li>
           </ul>
         </div>
@@ -147,35 +137,16 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        {/* Data Management */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Data Management</h2>
-          <div className="space-y-3">
-            <button 
-              className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled
-            >
-              Sync Catalog (Coming Soon)
-            </button>
-            <button 
-              className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled
-            >
-              Export Reports (Coming Soon)
-            </button>
-            <button 
-              className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled
-            >
-              Backup Database (Coming Soon)
-            </button>
-            <button 
-              className="w-full px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled
-            >
-              Print Daily Report (Coming Soon)
-            </button>
-          </div>
+        {/* Data Management - Backup */}
+        <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Database Backup</h2>
+          <DatabaseBackup />
+        </div>
+
+        {/* Data Management - Restore */}
+        <div className="bg-white rounded-lg shadow p-6 lg:col-span-2">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Database Restore</h2>
+          <DatabaseRestore />
         </div>
 
         {/* User Management */}

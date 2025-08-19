@@ -285,7 +285,10 @@ export default function RentalsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Game Rentals</h1>
+      <div className="flex flex-col">
+        <h1 className="text-2xl font-bold">Game Rentals</h1>
+        <h3 className="text-sm text-gray-400">ゲームレンタル</h3>
+      </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
@@ -298,7 +301,7 @@ export default function RentalsPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            Check Out
+            Check Out チェックアウト
           </button>
           <button
             onClick={() => setActiveTab('checkin')}
@@ -308,7 +311,7 @@ export default function RentalsPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            Check In ({activeRentals.length})
+            Check In チェックイン ({activeRentals.length})
           </button>
           <button
             onClick={() => setActiveTab('rentals')}
@@ -318,7 +321,7 @@ export default function RentalsPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            All Rentals ({allRentals.length})
+            All Rentals すべてのレンタル ({allRentals.length})
           </button>
         </nav>
       </div>
@@ -328,7 +331,7 @@ export default function RentalsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Game Selection */}
           <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="text-lg font-semibold mb-4">Select Game</h2>
+            <h2 className="text-lg font-semibold mb-4">Select Game <span className='text-gray-400'>ゲームを選択</span></h2>
             <input
               type="text"
               placeholder="Search games..."
@@ -397,7 +400,7 @@ export default function RentalsPage() {
           <div className="space-y-4">
             {/* Customer Selection */}
             <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-semibold mb-4">Customer Information</h2>
+              <h2 className="text-lg font-semibold mb-4">Customer Information  <span className='text-gray-400'>顧客情報</span></h2>
               <input
                 type="text"
                 placeholder="Search customers..."
@@ -429,7 +432,7 @@ export default function RentalsPage() {
 
             {/* Rental Details */}
             <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-semibold mb-4">Rental Details</h2>
+              <h2 className="text-lg font-semibold mb-4">Rental Details  <span className='text-gray-400'>レンタルの詳細</span></h2>
               
               <div className="space-y-4">
                 <div>
@@ -493,7 +496,7 @@ export default function RentalsPage() {
                   disabled={!selectedGame || !selectedCustomer || !photoUrl || loading}
                   className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Processing...' : 'Process Rental'}
+                  {loading ? 'Processing 処理...' : 'Process Rental プロセスレンタル'}
                 </button>
               </div>
             </div>

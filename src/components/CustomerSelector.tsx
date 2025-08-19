@@ -7,6 +7,8 @@ type Customer = {
   email: string
   firstName?: string | null
   lastName?: string | null
+  firstNameJa?: string | null
+  lastNameJa?: string | null
   displayName?: string | null
   phone?: string | null
   _count?: {
@@ -28,6 +30,8 @@ export default function CustomerSelector({ onSelectCustomer, onClose }: Customer
   const [newCustomer, setNewCustomer] = useState({
     firstName: '',
     lastName: '',
+    firstNameJa: '',
+    lastNameJa: '',
     email: '',
     phone: '',
   })
@@ -185,6 +189,24 @@ export default function CustomerSelector({ onSelectCustomer, onClose }: Customer
                   className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="名 (First Name in Japanese)"
+                  value={newCustomer.firstNameJa}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, firstNameJa: e.target.value })}
+                  className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  placeholder="姓 (Last Name in Japanese)"
+                  value={newCustomer.lastNameJa}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, lastNameJa: e.target.value })}
+                  className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
               <input
                 type="email"
                 placeholder="Email *"

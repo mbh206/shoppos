@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { email, firstName, lastName, phone } = body
+  const { email, firstName, lastName, firstNameJa, lastNameJa, phone } = body
 
   try {
     // Check if customer already exists
@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
         email,
         firstName,
         lastName,
+        firstNameJa,
+        lastNameJa,
         displayName,
         phone,
       },

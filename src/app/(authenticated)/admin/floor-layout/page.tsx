@@ -182,7 +182,7 @@ export default function FloorLayoutPage() {
                       : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
-                  Floor {floor}
+                  Floor {floor}階
                 </button>
               ))}
               {editMode && (

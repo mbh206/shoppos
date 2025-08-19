@@ -120,7 +120,10 @@ export default function OrdersPage() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Transactions</h1>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold">Transactions</h1>
+            <h3 className="text-sm text-gray-400">取引</h3>
+          </div>
           <div className="flex gap-4">
             <div className="flex gap-2">
               <button

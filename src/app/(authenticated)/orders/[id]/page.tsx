@@ -46,18 +46,6 @@ type Order = {
   closedAt?: string | null
 }
 
-// Sample catalog items for quick add
-const QUICK_ITEMS = [
-  { name: 'Coffee', price: 400, kind: 'fnb' },
-  { name: 'Latte', price: 500, kind: 'fnb' },
-  { name: 'Cappuccino', price: 500, kind: 'fnb' },
-  { name: 'Tea', price: 350, kind: 'fnb' },
-  { name: 'Sandwich', price: 800, kind: 'fnb' },
-  { name: 'Cake', price: 600, kind: 'fnb' },
-  { name: 'Pasta', price: 1200, kind: 'fnb' },
-  { name: 'Salad', price: 900, kind: 'fnb' },
-]
-
 export default function OrderDetailPage({ 
   params 
 }: { 
@@ -314,67 +302,6 @@ export default function OrderDetailPage({
               </div>
             </div>
           </div>
-
-          {/* Quick Add Items */}
-          {order.status === 'open' && (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Add Items</h2>
-              
-              {/* Quick Add Buttons */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Quick Add</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {QUICK_ITEMS.map((item) => (
-                    <button
-                      key={item.name}
-                      onClick={() => handleAddItem(item.name, item.price, 1, item.kind)}
-                      className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                    >
-                      {item.name} ({formatMoney(item.price * 100)})
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Custom Item */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Custom Item</h3>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    placeholder="Item name"
-                    value={customItem.name}
-                    onChange={(e) => setCustomItem({ ...customItem, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      placeholder="Price (¥)"
-                      value={customItem.price}
-                      onChange={(e) => setCustomItem({ ...customItem, price: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Qty"
-                      min="1"
-                      value={customItem.qty}
-                      onChange={(e) => setCustomItem({ ...customItem, qty: parseInt(e.target.value) || 1 })}
-                      className="w-20 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                      onClick={handleAddCustomItem}
-                      disabled={!customItem.name || !customItem.price}
-                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

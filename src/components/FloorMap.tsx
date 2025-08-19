@@ -113,7 +113,10 @@ export default function FloorMap() {
     <div className="p-4">
       <div className="mb-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
+         <div className="flex flex-col">
           <h1 className="text-2xl font-bold">Floor Map</h1>
+          <h3 className="text-sm text-gray-400">フロアマップ</h3>
+         </div>
           {floors.length > 1 && (
             <div className="flex gap-2">
               {floors.map(floor => (
@@ -126,7 +129,7 @@ export default function FloorMap() {
                       : 'bg-gray-200 hover:bg-gray-300'
                   }`}
                 >
-                  Floor {floor}
+                  Floor {floor}階
                 </button>
               ))}
             </div>

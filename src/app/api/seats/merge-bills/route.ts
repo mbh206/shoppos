@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         const itemsToMove = session.order.items.map(item => ({
           orderId: primarySession.orderId,
           kind: item.kind,
-          name: `[From Seat ${session.seatId}] ${item.name}`,
+          name: item.name,
           qty: item.qty,
           unitPriceMinor: item.unitPriceMinor,
           taxMinor: item.taxMinor,

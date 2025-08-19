@@ -48,6 +48,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
   const navItems = [
     {
       name: 'Dashboard',
+      nameJa: 'ダッシュボード',
       href: getDashboardHref(),
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,6 +59,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
     },
     {
       name: 'Floor Map',
+      nameJa: 'フロアマップ',
       href: '/floor',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,6 +70,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
     },
     {
       name: 'Transactions',
+      nameJa: '取引',
       href: '/orders',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,6 +81,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
     },
     {
       name: 'Games',
+      nameJa: 'ゲーム',
       href: '/games',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,6 +92,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
     },
     {
       name: 'Rentals',
+      nameJa: 'レンタル',
       href: '/rentals',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,6 +103,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
     },
     {
       name: 'Customers',
+      nameJa: '顧客',
       href: '/customers',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,6 +114,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
     },
     {
       name: 'Inventory',
+      nameJa: '在庫',
       href: '/admin/inventory',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,6 +125,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
     },
     {
       name: 'Employees',
+      nameJa: '従業員',
       href: '/admin/employees',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,6 +136,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
     },
     {
       name: 'Settings',
+      nameJa: '設定',
       href: '/admin/settings',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,7 +153,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
   return (
     <div className={`${isCollapsed ? 'w-16' : 'w-48'} bg-gray-900 text-white h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-800">
+      <div className="px-4 py-1 border-b border-gray-800">
         <div className="flex items-center justify-between">
           <h1 className={`font-bold text-xl ${isCollapsed ? 'hidden' : 'block'}`}>
             KOMA POS {isRetailMode && <span className="text-yellow-400 text-sm">(Retail)</span>}
@@ -165,12 +174,12 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
       </div>
 
       {/* User Info */}
-      <div className="p-4 border-b border-gray-800">
+      <div className="px-4 py-1 border-b border-gray-800">
         <div className={`${isCollapsed ? 'text-center' : ''}`}>
           <div className={`text-sm text-gray-400 ${isCollapsed ? 'hidden' : 'block'}`}>
             {userName || userEmail}
           </div>
-          <div className={`text-xs text-gray-500 mt-1 ${isCollapsed ? 'hidden' : 'block'}`}>
+          <div className={`text-xs text-gray-500 ${isCollapsed ? 'hidden' : 'block'}`}>
             Role: {userRole}
           </div>
           {isCollapsed && (
@@ -191,7 +200,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-1 rounded-lg transition-colors ${
                     isActive
                       ? 'bg-blue-600 text-white'
                       : 'hover:bg-gray-800 text-gray-300 hover:text-white'
@@ -199,7 +208,10 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
                   title={isCollapsed ? item.name : undefined}
                 >
                   <span className="flex-shrink-0">{item.icon}</span>
-                  <span className={`${isCollapsed ? 'hidden' : 'block'}`}>{item.name}</span>
+                  <div className={`${isCollapsed ? 'hidden' : 'flex flex-col'}`}>
+                    <span className="text-sm">{item.name}</span>
+                    <span className="text-xs text-gray-400">{item.nameJa}</span>
+                  </div>
                 </Link>
               </li>
             )
@@ -232,17 +244,6 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
           </button>
         </div>
       </nav>
-
-      {/* Coming Soon Section */}
-      {!isCollapsed && userRole === 'admin' && (
-        <div className="p-4 border-t border-gray-800">
-          <div className="text-xs text-gray-500 mb-2">Coming Soon:</div>
-          <ul className="space-y-1 text-xs text-gray-600">
-            <li>• Square Checkout</li>
-            <li>• Events</li>
-          </ul>
-        </div>
-      )}
 
       {/* Sign Out */}
       <div className="p-4 border-t border-gray-800">
