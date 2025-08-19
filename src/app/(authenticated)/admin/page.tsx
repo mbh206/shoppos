@@ -126,7 +126,7 @@ export default async function AdminDashboard() {
         </Link>
 
         <Link
-          href="/games/library"
+          href="/games"
           className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <h2 className="text-xl font-semibold mb-2">Games Library</h2>

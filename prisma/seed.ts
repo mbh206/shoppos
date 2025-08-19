@@ -21,9 +21,6 @@ async function main() {
 
   // Create users
   const adminPassword = await bcrypt.hash('admin123', 10)
-  const hostPassword = await bcrypt.hash('host123', 10)
-  const serverPassword = await bcrypt.hash('server123', 10)
-  const kitchenPassword = await bcrypt.hash('kitchen123', 10)
 
   const admin = await prisma.user.create({
     data: {
@@ -31,33 +28,6 @@ async function main() {
       name: 'Admin User',
       role: 'admin',
       hashedPassword: adminPassword,
-    },
-  })
-
-  const host = await prisma.user.create({
-    data: {
-      email: 'host@example.com',
-      name: 'Host User',
-      role: 'host',
-      hashedPassword: hostPassword,
-    },
-  })
-
-  const server = await prisma.user.create({
-    data: {
-      email: 'server@example.com',
-      name: 'Server User',
-      role: 'server',
-      hashedPassword: serverPassword,
-    },
-  })
-
-  const kitchen = await prisma.user.create({
-    data: {
-      email: 'kitchen@example.com',
-      name: 'Kitchen User',
-      role: 'kitchen',
-      hashedPassword: kitchenPassword,
     },
   })
 
@@ -113,9 +83,6 @@ async function main() {
   console.log('Seed data created successfully!')
   console.log('Users created:')
   console.log('  admin@example.com / admin123')
-  console.log('  host@example.com / host123')
-  console.log('  server@example.com / server123')
-  console.log('  kitchen@example.com / kitchen123')
 }
 
 main()

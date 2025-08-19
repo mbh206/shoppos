@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // Public endpoint - no authentication required for kiosk
 export async function GET(request: NextRequest) {
@@ -21,12 +19,23 @@ export async function GET(request: NextRequest) {
       }
     })
     
-    const activeGameIds = new Set(activeSessions.map(s => s.gameId))
+    // Get currently rented out games
+    const activeRentals = await prisma.gameRental.findMany({
+      where: {
+        status: 'out'
+      },
+      select: {
+        gameId: true
+      }
+    })
     
-    // Update availability based on active sessions
+    const activeGameIds = new Set(activeSessions.map(s => s.gameId))
+    const rentedGameIds = new Set(activeRentals.map(r => r.gameId))
+    
+    // Update availability based on active sessions AND rentals
     const gamesWithAvailability = games.map(game => ({
       ...game,
-      available: !activeGameIds.has(game.id)
+      available: !activeGameIds.has(game.id) && !rentedGameIds.has(game.id)
     }))
     
     return NextResponse.json(gamesWithAvailability)

@@ -306,15 +306,32 @@ export default function KioskGamesPage() {
   if (isIdle) {
     return (
       <div 
-        className="fixed inset-0 bg-black flex items-center justify-center cursor-pointer"
+        className="fixed inset-0 bg-gradient-to-br from-purple-900 via-purple-700 to-pink-700 flex items-center justify-center cursor-pointer"
         onClick={() => setIsIdle(false)}
       >
-        <div className="text-center animate-pulse">
-          <h1 className="text-6xl font-bold text-white mb-4">
-            {language === 'ja' ? 'タップしてゲームを探す' : 'Tap to Browse Games'}
-          </h1>
-          <div className="text-2xl text-gray-400">
-            {language === 'ja' ? `${games.filter(g => g.available).length} ゲーム利用可能` : `${games.filter(g => g.available).length} Games Available`}
+        <div className="text-center">
+          <div className="animate-pulse">
+            <h1 className="text-7xl font-bold text-white mb-2">
+              Tap to Browse Games
+            </h1>
+            <h2 className="text-5xl font-bold text-white/90 mb-8">
+              タップしてゲームを探す
+            </h2>
+          </div>
+          
+          <div className="space-y-2 animate-pulse" style={{ animationDelay: '0.5s' }}>
+            <div className="text-3xl text-white/80 font-medium">
+              {games.filter(g => g.available).length} Games Available
+            </div>
+            <div className="text-2xl text-white/70">
+              {games.filter(g => g.available).length} ゲーム利用可能
+            </div>
+          </div>
+          
+          <div className="mt-12 animate-bounce">
+            <svg className="w-16 h-16 mx-auto text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z" />
+            </svg>
           </div>
         </div>
       </div>

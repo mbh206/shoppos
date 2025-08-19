@@ -28,6 +28,8 @@ model User {
   profile        EmployeeProfile?
   timeEntries    TimeEntry[]
   adjustedEntries TimeEntry[] @relation("AdjustedBy")
+  rentalsCheckedOut GameRental[] @relation("CheckOutStaff")
+  rentalsCheckedIn  GameRental[] @relation("CheckInStaff")
 }
 
 enum UserRole {
@@ -50,6 +52,7 @@ model Customer {
   paidOrders       Order[]       @relation("Payer")
   seatSessions     SeatSession[]
   rentals          Rental[]
+  gameRentals      GameRental[]
   eventTickets     EventTicket[]
 }
 
@@ -133,6 +136,8 @@ model Order {
   events          OrderEvent[]
   payments        PaymentAttempt[]
   eventTickets    EventTicket[]
+  rentalCheckouts GameRental[]    @relation("RentalCheckoutOrder")
+  rentalReturns   GameRental[]    @relation("RentalReturnOrder")
 
   @@index([status, channel])
   @@index([openedAt])
@@ -177,6 +182,8 @@ enum OrderItemKind {
   seat_time
   rental
   event
+  rental_deposit
+  rental_fee
 }
 
 model SeatSession {
@@ -596,6 +603,7 @@ enum GameComplexity {
   expert
 }
 
+
 model Game {
   id             String          @id @default(cuid())
   name           String
@@ -625,10 +633,17 @@ model Game {
   mechanics      String[]        // BGG mechanics (e.g., "Worker Placement")
   thumbnailUrl   String?         // Small image URL from BGG
   
+  // Rental fields
+  retailPrice    Int?            // Retail price for rental calculations
+  isPremium      Boolean         @default(false) // Premium games incur extra fee
+  maxRentalDays  Int?            // Maximum rental period (null = no limit)
+  isRentable     Boolean         @default(false) // Is this game available for rental
+  
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   
   tableSessions  TableGameSession[]
+  rentals        GameRental[]
   
   @@index([name])
   @@index([available])
@@ -649,6 +664,45 @@ model TableGameSession {
   @@index([tableId])
   @@index([gameId])
   @@index([startedAt])
+}
+
+model GameRental {
+  id                String       @id @default(cuid())
+  customerId        String
+  gameId            String
+  checkOutDate      DateTime     @default(now())
+  expectedReturnDate DateTime
+  actualReturnDate  DateTime?
+  checkOutPhotoUrl  String       // Required photo of game contents
+  checkInPhotoUrl   String?      // Optional photo at return for damage
+  depositAmount     Int          // Full retail value held as deposit
+  baseFee           Int          // 10% of retail value
+  nightlyFee        Int          // ¥100 per night
+  premiumFee        Int          @default(0) // ¥1000 for premium games
+  damageFee         Int          @default(0) // Added if damage occurs
+  totalCharged      Int?         // Final amount charged
+  paymentMethodId   String?      // Reference to stored payment method
+  checkOutStaffId   String
+  checkInStaffId    String?
+  checkoutOrderId   String?      // Order created when checking out (deposit)
+  returnOrderId     String?      // Order created when returning (charges)
+  status            RentalStatus @default(out)
+  notes             String?      @db.Text
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  customer          Customer     @relation(fields: [customerId], references: [id])
+  game              Game         @relation(fields: [gameId], references: [id])
+  checkOutStaff     User         @relation("CheckOutStaff", fields: [checkOutStaffId], references: [id])
+  checkInStaff      User?        @relation("CheckInStaff", fields: [checkInStaffId], references: [id])
+  checkoutOrder     Order?       @relation("RentalCheckoutOrder", fields: [checkoutOrderId], references: [id])
+  returnOrder       Order?       @relation("RentalReturnOrder", fields: [returnOrderId], references: [id])
+  
+  @@index([customerId])
+  @@index([gameId])
+  @@index([status])
+  @@index([checkOutDate])
+  @@index([expectedReturnDate])
 }
 
 // Employee Management Models

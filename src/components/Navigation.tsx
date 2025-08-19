@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRetailMode } from '@/contexts/RetailModeContext'
 import { UserRole } from '@prisma/client'
+import TimeClockModal from '@/components/TimeClockModal'
 
 type NavigationProps = {
   userRole: UserRole
@@ -15,7 +16,27 @@ type NavigationProps = {
 export default function Navigation({ userRole, userName, userEmail }: NavigationProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [showTimeClock, setShowTimeClock] = useState(false)
+  const [activeEmployeeCount, setActiveEmployeeCount] = useState(0)
   const { isRetailMode } = useRetailMode()
+
+  useEffect(() => {
+    fetchActiveEmployees()
+    const interval = setInterval(fetchActiveEmployees, 60000) // Refresh every minute
+    return () => clearInterval(interval)
+  }, [])
+
+  const fetchActiveEmployees = async () => {
+    try {
+      const response = await fetch('/api/time-clock/active')
+      if (response.ok) {
+        const data = await response.json()
+        setActiveEmployeeCount(data.length)
+      }
+    } catch (error) {
+      console.error('Failed to fetch active employees:', error)
+    }
+  }
 
   // Determine dashboard based on role
   const getDashboardHref = () => {
@@ -33,7 +54,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
       ),
-      show: () => !isRetailMode, // Hide in retail mode
+      show: () => !isRetailMode,
     },
     {
       name: 'Floor Map',
@@ -63,7 +84,17 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
         </svg>
       ),
-      show: () => true,
+      show: () => true, // Always show games
+    },
+    {
+      name: 'Rentals',
+      href: '/rentals',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V2" />
+        </svg>
+      ),
+      show: () => true, // Always show rentals
     },
     {
       name: 'Customers',
@@ -73,7 +104,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
-      show: () => !isRetailMode, // Hide in retail mode
+      show: () => !isRetailMode,
     },
     {
       name: 'Inventory',
@@ -174,6 +205,32 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
             )
           })}
         </ul>
+        
+        {/* Time Clock Button */}
+        <div className=" pt-2 pb-2 mt-6 border-t border-gray-800 bg-orange-600/90 hover:bg-orange-400 hover:text-white rounded-xl">
+          <button
+            onClick={() => setShowTimeClock(true)}
+            className="w-full flex items-center gap-3 px-3 py-1 rounded-lg transition-colors relative"
+            title={isCollapsed ? 'Time Clock' : undefined}
+          >
+            <span className="flex-shrink-0 relative">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {activeEmployeeCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {activeEmployeeCount}
+                </span>
+              )}
+            </span>
+            <span className={`${isCollapsed ? 'hidden' : 'block'}`}>Time Clock</span>
+            {/* {!isCollapsed && activeEmployeeCount > 0 && (
+              <span className="ml-auto text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
+                {activeEmployeeCount} active
+              </span>
+            )} */}
+          </button>
+        </div>
       </nav>
 
       {/* Coming Soon Section */}
@@ -181,10 +238,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
         <div className="p-4 border-t border-gray-800">
           <div className="text-xs text-gray-500 mb-2">Coming Soon:</div>
           <ul className="space-y-1 text-xs text-gray-600">
-            <li>• Pickup Queue</li>
             <li>• Square Checkout</li>
-            <li>• Catalog Sync</li>
-            <li>• Rentals</li>
             <li>• Events</li>
           </ul>
         </div>
@@ -207,6 +261,20 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
           </button>
         </form>
       </div>
+
+      {/* Time Clock Modal */}
+      <TimeClockModal 
+        isOpen={showTimeClock}
+        onClose={() => {
+          setShowTimeClock(false)
+          fetchActiveEmployees() // Refresh count when modal closes
+        }}
+        currentUser={{
+          id: userEmail,
+          name: userName || userEmail,
+          role: userRole
+        }}
+      />
     </div>
   )
 }

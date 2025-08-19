@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { UserRole } from '@prisma/client'
+import TimeManagement from '@/components/TimeManagement'
 
 type Employee = {
   id: string
@@ -24,15 +25,21 @@ type Employee = {
   }
 }
 
+type TabView = 'employees' | 'timeManagement'
+
 export default function EmployeeManagement() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [isNewEmployee, setIsNewEmployee] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabView>('employees')
+  
   useEffect(() => {
-    fetchEmployees()
-  }, [])
+    if (activeTab === 'employees') {
+      fetchEmployees()
+    }
+  }, [activeTab])
 
   const fetchEmployees = async () => {
     try {
@@ -146,122 +153,150 @@ export default function EmployeeManagement() {
 
   const roles: UserRole[] = ['admin', 'manager', 'employee']
 
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="text-center">Loading employees...</div>
-      </div>
-    )
-  }
-
   return (
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Employee Management</h1>
-        <p className="text-gray-600 mt-2">Manage staff accounts and roles</p>
+        <p className="text-gray-600 mt-2">Manage staff accounts, roles, and time tracking</p>
       </div>
 
-      {/* Filters and Actions */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex flex-wrap items-center gap-4">
-
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="-mb-px flex space-x-8">
           <button
-            onClick={handleAddEmployee}
-            className="ml-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => setActiveTab('employees')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'employees'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
           >
-            Add Employee
+            Employee List
           </button>
-        </div>
+          <button
+            onClick={() => setActiveTab('timeManagement')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'timeManagement'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Time Management
+          </button>
+        </nav>
       </div>
 
-      {/* Employee List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Employee
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ID
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Position
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Role
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Hourly Rate
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Time Entries
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {employees.map((employee) => (
-              <tr key={employee.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">
-                      {employee.name || 'No name'}
-                    </div>
-                    <div className="text-sm text-gray-500">{employee.email}</div>
-                    {employee.profile?.phoneNumber && (
-                      <div className="text-xs text-gray-400">{employee.profile.phoneNumber}</div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {employee.employeeId || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {employee.position || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded ${
-                    employee.role === 'admin' ? 'bg-red-100 text-red-800' :
-                    employee.role === 'manager' ? 'bg-purple-100 text-purple-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {employee.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {employee.profile?.hourlyRate ? `¥${employee.profile.hourlyRate}/hr` : '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {employee._count.timeEntries}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <button
-                    onClick={() => handleEditEmployee(employee)}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteEmployee(employee)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {employees.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No employees found
+      {/* Tab Content */}
+      {activeTab === 'employees' ? (
+        <>
+          {/* Filters and Actions */}
+          <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <button
+                onClick={handleAddEmployee}
+                className="ml-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Add Employee
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Employee List */}
+          {loading ? (
+            <div className="text-center">Loading employees...</div>
+          ) : (
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Employee
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Position
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Hourly Rate
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Time Entries
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {employees.map((employee) => (
+                    <tr key={employee.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {employee.name || 'No name'}
+                          </div>
+                          <div className="text-sm text-gray-500">{employee.email}</div>
+                          {employee.profile?.phoneNumber && (
+                            <div className="text-xs text-gray-400">{employee.profile.phoneNumber}</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {employee.employeeId || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {employee.position || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded ${
+                          employee.role === 'admin' ? 'bg-red-100 text-red-800' :
+                          employee.role === 'manager' ? 'bg-purple-100 text-purple-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {employee.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {employee.profile?.hourlyRate ? `¥${employee.profile.hourlyRate}/hr` : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {employee._count.timeEntries}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <button
+                          onClick={() => handleEditEmployee(employee)}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteEmployee(employee)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {employees.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No employees found
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <TimeManagement />
+      )}
 
       {/* Employee Modal */}
       {showModal && selectedEmployee && (
