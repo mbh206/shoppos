@@ -35,7 +35,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "serialport": "^12.0.0",
-    "square": "^43.0.1",
+    "square": "^43.0.2",
     "usb-detection": "^4.14.2",
     "xlsx": "^0.18.5",
     "xml2js": "^0.6.2"

@@ -22,7 +22,15 @@ export async function GET(
           include: {
             seatSessions: {
               where: {
-                endedAt: null,
+                OR: [
+                  { endedAt: null }, // Active sessions
+                  { 
+                    AND: [
+                      { endedAt: { not: null } }, // Timer stopped
+                      { order: { status: 'awaiting_payment' } } // But not paid yet
+                    ]
+                  }
+                ]
               },
               include: {
                 customer: true,

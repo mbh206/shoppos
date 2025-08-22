@@ -109,13 +109,13 @@ export default async function AdminDashboard() {
           <p className="text-gray-600">Configure table layout and seating arrangements</p>
         </Link>
 
-        <Link
+        {/* <Link
           href="/admin/time-billing"
           className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <h2 className="text-xl font-semibold mb-2">Time & Billing</h2>
           <p className="text-gray-600">Configure time-based billing and pricing tiers</p>
-        </Link>
+        </Link> */}
 
         <Link
           href="/admin/reports"
@@ -131,6 +131,14 @@ export default async function AdminDashboard() {
         >
           <h2 className="text-xl font-semibold mb-2">Games Library</h2>
           <p className="text-gray-600">Manage board game inventory and rentals</p>
+        </Link>
+
+        <Link
+          href="/admin/loyalty"
+          className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
+        >
+          <h2 className="text-xl font-semibold mb-2">Loyalty & Memberships</h2>
+          <p className="text-gray-600">Manage points, membership plans, and customer rewards</p>
         </Link>
 
         <Link

@@ -179,8 +179,10 @@ export default function TableDetailPage({
       }
     }
 
-    // Calculate items total
-    const itemsTotal = activeSession.order.items.reduce((sum, item) => sum + item.totalMinor, 0)
+    // Calculate items total (excluding seat_time which is already in timeCharge)
+    const itemsTotal = activeSession.order.items
+      .filter(item => item.kind !== 'seat_time')
+      .reduce((sum, item) => sum + item.totalMinor, 0)
 
     return timeCharge + itemsTotal
   }
@@ -280,14 +282,18 @@ export default function TableDetailPage({
   const handleEditTimeClick = (e: React.MouseEvent, seatSession: SeatSession) => {
     e.stopPropagation()
     setEditingSession(seatSession)
-    // Format dates for datetime-local input
+    // Format dates for datetime-local input in local timezone
     const startDate = new Date(seatSession.startedAt)
-    const formattedStart = startDate.toISOString().slice(0, 16)
+    // Convert to local timezone format for datetime-local input
+    const tzOffset = startDate.getTimezoneOffset() * 60000
+    const localStart = new Date(startDate.getTime() - tzOffset)
+    const formattedStart = localStart.toISOString().slice(0, 16)
     setEditStartTime(formattedStart)
     
     if (seatSession.endedAt) {
       const endDate = new Date(seatSession.endedAt)
-      const formattedEnd = endDate.toISOString().slice(0, 16)
+      const localEnd = new Date(endDate.getTime() - tzOffset)
+      const formattedEnd = localEnd.toISOString().slice(0, 16)
       setEditEndTime(formattedEnd)
     } else {
       setEditEndTime('')
@@ -633,33 +639,49 @@ export default function TableDetailPage({
             const currentTotal = calculateSeatTotal(seat)
             // Timer is running if there's a startedAt but no endedAt
             const hasTimer = activeSession && activeSession.startedAt && !activeSession.endedAt
+            // Timer was stopped but seat still occupied (ready for checkout)
+            const timerStopped = activeSession && activeSession.endedAt && activeSession.order.status === 'awaiting_payment'
             const hasItems = activeSession && activeSession.order.items.filter(item => item.kind !== 'seat_time' && !item.meta?.isGame).length > 0
 
             return (
               <div
                 key={seat.id}
-                className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-lg ${
-                  isOccupied ? 'bg-blue-50 border-blue-300' :
+                className={`border rounded-lg p-4 transition-all ${
+                  timerStopped ? 'bg-yellow-50 border-yellow-400 hover:shadow-lg' :
+                  isOccupied ? 'bg-blue-50 border-blue-300 cursor-pointer hover:shadow-lg' :
                   seat.status === 'closed' ? 'bg-gray-100 border-gray-300' :
-                  'bg-white border-gray-200'
+                  'bg-white border-gray-200 cursor-pointer hover:shadow-lg'
                 }`}
-                onClick={() => handleSeatClick(seat)}
+                onClick={() => !timerStopped && handleSeatClick(seat)}
               >
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-semibold">Seat {seat.number}</h3>
                   <span className={`px-2 py-1 rounded text-xs text-white ${
+                    timerStopped ? 'bg-yellow-500' :
                     isOccupied ? 'bg-blue-500' :
                     seat.status === 'closed' ? 'bg-gray-500' :
                     'bg-green-500'
                   }`}>
-                    {seat.status}
+                    {timerStopped ? 'ready to pay' : seat.status}
                   </span>
                 </div>
 
                 {activeSession && (
                   <div className="space-y-2">
                     {/* Timer Section or No Timer Status */}
-                    {hasTimer ? (
+                    {timerStopped ? (
+                      <>
+                        <div className="bg-yellow-100 border border-yellow-300 rounded p-2">
+                          <div className="text-sm font-medium text-yellow-800">⏱️ Timer Stopped</div>
+                          <div className="text-xs text-yellow-700">
+                            Duration: {activeSession.billedMinutes ? `${Math.floor(activeSession.billedMinutes / 60)}h ${activeSession.billedMinutes % 60}m` : 'Calculating...'}
+                          </div>
+                          <div className="text-sm font-bold text-yellow-900 mt-1">
+                            Ready for checkout
+                          </div>
+                        </div>
+                      </>
+                    ) : hasTimer ? (
                       <>
                         <div className="text-sm flex justify-between items-center">
                           <div>
@@ -693,7 +715,7 @@ export default function TableDetailPage({
                             {(() => {
                               const billing = getEstimatedCharge(activeSession.startedAt)
                               if (billing.totalCharge === 0) {
-                                return '¥0 (grace period)'
+                                return '¥0'
                               }
                               if (billing.rateApplied === '5hour') {
                                 return `¥${billing.totalCharge.toLocaleString('ja-JP')} (5hr cap)`
@@ -786,56 +808,70 @@ export default function TableDetailPage({
 
                     {/* Action Buttons */}
                     {activeSession && (
-                      <div className="grid grid-cols-3 gap-2 mt-3">
-                        {hasTimer && (
-                          <button
-                            onClick={(e) => handleStopTimerClick(e, seat)}
-                            className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
-                          >
-                            Stop Timer
-                          </button>
+                      <div className={`grid ${timerStopped ? 'grid-cols-2' : 'grid-cols-3'} gap-2 mt-3`}>
+                        {!timerStopped && (
+                          <>
+                            {hasTimer && (
+                              <button
+                                onClick={(e) => handleStopTimerClick(e, seat)}
+                                className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
+                              >
+                                Stop Timer
+                              </button>
+                            )}
+                            {!hasTimer && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleStartTimerClick(seat)
+                                }}
+                                className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                              >
+                                Start Timer
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => handleAddItemsClick(e, seat)}
+                              disabled={!!(activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId)}
+                              className={`px-2 py-1 rounded text-xs ${
+                                activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                  : 'bg-purple-500 text-white hover:bg-purple-600'
+                              }`}
+                              title={activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId ? 'Bill has been merged' : 'Add Items'}
+                            >
+                              Add Items
+                            </button>
+                            <button
+                              onClick={(e) => handleTransferClick(e, seat)}
+                              className="px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600"
+                            >
+                              Transfer
+                            </button>
+                          </>
                         )}
-                        {!hasTimer && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleStartTimerClick(seat)
-                            }}
-                            className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-                          >
-                            Start Timer
-                          </button>
+                        {timerStopped && (
+                          <>
+                            <button
+                              onClick={(e) => handleAddItemsClick(e, seat)}
+                              disabled={!!(activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId)}
+                              className={`px-3 py-2 rounded font-medium ${
+                                activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                  : 'bg-purple-500 text-white hover:bg-purple-600'
+                              }`}
+                              title={activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId ? 'Bill has been merged' : 'Add Items'}
+                            >
+                              + Add Items
+                            </button>
+                            <button
+                              onClick={(e) => handleCheckoutClick(e, seat)}
+                              className="px-3 py-2 bg-green-600 text-white rounded font-semibold hover:bg-green-700 animate-pulse"
+                            >
+                              Checkout →
+                            </button>
+                          </>
                         )}
-                        <button
-                          onClick={(e) => handleAddItemsClick(e, seat)}
-                          disabled={!!(activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId)}
-                          className={`px-2 py-1 rounded text-xs ${
-                            activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-purple-500 text-white hover:bg-purple-600'
-                          }`}
-                          title={activeSession?.meta?.mergedToSessionId || activeSession?.order.meta?.mergedToOrderId ? 'Bill has been merged' : 'Add Items'}
-                        >
-                          Add Items
-                        </button>
-                        <button
-                          onClick={(e) => handleTransferClick(e, seat)}
-                          className="px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600"
-                        >
-                          Transfer
-                        </button>
-                        {/* <button
-                          onClick={(e) => handleCheckoutClick(e, seat)}
-                          disabled={!!hasTimer}
-                          className={`px-2 py-1 rounded text-xs ${
-                            hasTimer 
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                              : 'bg-green-500 text-white hover:bg-green-600'
-                          }`}
-                          title={hasTimer ? 'Stop timer before checkout' : 'Checkout'}
-                        >
-                          Checkout
-                        </button> */}
                       </div>
                     )}
                   </div>
@@ -1053,7 +1089,10 @@ export default function TableDetailPage({
             </div>
             <div className="flex-1 overflow-hidden">
               {(() => {
-                const activeSession = showingAddItems.seatSessions.find(s => !s.endedAt)
+                // Find any unpaid session (either active or stopped but awaiting payment)
+                const activeSession = showingAddItems.seatSessions.find(s => 
+                  s.order.status === 'open' || s.order.status === 'awaiting_payment'
+                )
                 if (!activeSession) return <div className="p-4">No active session</div>
                 
                 return (
@@ -1267,7 +1306,7 @@ export default function TableDetailPage({
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Start Time
+                  Start Time (Japan Time)
                 </label>
                 <input
                   type="datetime-local"
@@ -1275,11 +1314,23 @@ export default function TableDetailPage({
                   onChange={(e) => setEditStartTime(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {editStartTime && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {new Date(editStartTime).toLocaleString('ja-JP', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      weekday: 'short'
+                    })}
+                  </div>
+                )}
               </div>
               
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  End Time (optional - leave empty for ongoing session)
+                  End Time (Japan Time - optional, leave empty for ongoing session)
                 </label>
                 <input
                   type="datetime-local"
@@ -1287,6 +1338,18 @@ export default function TableDetailPage({
                   onChange={(e) => setEditEndTime(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {editEndTime && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {new Date(editEndTime).toLocaleString('ja-JP', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      weekday: 'short'
+                    })}
+                  </div>
+                )}
               </div>
               
               {editStartTime && editEndTime && (

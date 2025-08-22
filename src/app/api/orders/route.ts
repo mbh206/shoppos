@@ -11,12 +11,14 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const status = searchParams.get('status')
   const channel = searchParams.get('channel')
+  const paymentGroupId = searchParams.get('paymentGroupId')
 
   try {
     const orders = await prisma.order.findMany({
       where: {
         ...(status && { status: status as any }),
         ...(channel && { channel: channel as any }),
+        ...(paymentGroupId && { paymentGroupId }),
       },
       include: {
         customer: true,
@@ -29,6 +31,7 @@ export async function GET(request: NextRequest) {
                 table: true,
               },
             },
+            customer: true,
           },
         },
         payments: true,

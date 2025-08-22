@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { MembershipService } from '@/lib/membership-service'
 
 export async function GET(
   request: NextRequest,
@@ -54,6 +55,26 @@ export async function GET(
             },
           },
         },
+        pointsTransactions: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 20,
+        },
+        memberships: {
+          where: {
+            status: 'ACTIVE',
+          },
+          include: {
+            plan: true,
+            usage: {
+              orderBy: {
+                createdAt: 'desc',
+              },
+              take: 10,
+            },
+          },
+        },
         _count: {
           select: {
             seatSessions: true,
@@ -85,12 +106,27 @@ export async function GET(
         }
       })
     })
+    
+    // Get active membership if any
+    const activeMembership = customer.memberships.find(m => m.status === 'ACTIVE')
 
     return NextResponse.json({
       ...customer,
       stats: {
         totalSpent,
         gamesPlayed: Array.from(gamesPlayed),
+      },
+      loyalty: {
+        pointsBalance: customer.pointsBalance,
+        activeMembership: activeMembership ? {
+          planName: activeMembership.plan.name,
+          planNameJa: activeMembership.plan.nameJa,
+          hoursRemaining: Math.max(0, activeMembership.plan.hoursIncluded - activeMembership.hoursUsed),
+          hoursUsed: activeMembership.hoursUsed,
+          hoursIncluded: activeMembership.plan.hoursIncluded,
+          endDate: activeMembership.endDate,
+          autoRenew: activeMembership.autoRenew,
+        } : null,
       },
     })
   } catch (error) {

@@ -49,13 +49,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await auth()
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
+    const searchParams = request.nextUrl.searchParams
+    const includeLoyalty = searchParams.get('includeLoyalty') === 'true'
+
     const customers = await prisma.customer.findMany({
       include: {
         _count: {
@@ -65,6 +68,13 @@ export async function GET() {
             eventTickets: true,
           },
         },
+        ...(includeLoyalty && {
+          memberships: {
+            include: {
+              plan: true,
+            },
+          },
+        }),
       },
       orderBy: {
         createdAt: 'desc',

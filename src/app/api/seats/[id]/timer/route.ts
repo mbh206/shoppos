@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { calculateTimeCharge, formatTimeCharge, getTimeChargeDescription } from '@/lib/time-billing'
+import { MembershipService } from '@/lib/membership-service'
 
 export async function POST(
   request: NextRequest,
@@ -155,46 +156,127 @@ export async function DELETE(
     const endedAt = new Date()
     const durationMs = endedAt.getTime() - seatSession.startedAt.getTime()
     const durationMinutes = Math.floor(durationMs / (1000 * 60))
+    const durationHours = durationMinutes / 60
     
-    // Calculate time charge using our complex billing rules
-    const billing = calculateTimeCharge(durationMinutes)
-    const totalPrice = billing.totalCharge
-    const chargeDescription = getTimeChargeDescription(billing)
+    // Check for membership and calculate charges
+    let totalPrice = 0
+    let chargeDescription = ''
+    let membershipUsed = null
+    let membershipHoursUsed = 0
+    let overageHours = 0
+    
+    if (seatSession.customerId) {
+      // Check for active membership
+      const membershipCharges = await MembershipService.calculateTimeCharges(
+        seatSession.customerId,
+        durationHours,
+        50000 // ¥500/hour regular rate in minor units
+      )
+      
+      // Round to nearest ¥10 to avoid odd prices like ¥866.67
+      totalPrice = Math.round(membershipCharges.totalCharge / 1000) * 10 // Convert to major units and round to ¥10
+      
+      if (membershipCharges.membership) {
+        // Member with free hours
+        membershipUsed = membershipCharges.membership
+        membershipHoursUsed = membershipCharges.includedHours
+        overageHours = membershipCharges.overageHours
+        
+        if (membershipCharges.includedHours > 0 && membershipCharges.overageHours > 0) {
+          chargeDescription = `${membershipCharges.includedHours.toFixed(1)}h free + ${membershipCharges.overageHours.toFixed(1)}h @ ¥300/h`
+        } else if (membershipCharges.includedHours > 0) {
+          chargeDescription = `${membershipCharges.includedHours.toFixed(1)}h free (membership)`
+        } else {
+          chargeDescription = `${membershipCharges.overageHours.toFixed(1)}h @ ¥300/h (overage)`
+        }
+      } else {
+        // Non-member, use regular billing
+        const billing = calculateTimeCharge(durationMinutes)
+        totalPrice = billing.totalCharge
+        chargeDescription = getTimeChargeDescription(billing)
+      }
+    } else {
+      // No customer, use regular billing
+      const billing = calculateTimeCharge(durationMinutes)
+      totalPrice = billing.totalCharge
+      chargeDescription = getTimeChargeDescription(billing)
+    }
 
     // Start transaction
     const result = await prisma.$transaction(async (tx) => {
+      // Track membership usage if applicable
+      if (membershipUsed && (membershipHoursUsed > 0 || overageHours > 0)) {
+        const membership = await tx.customerMembership.findFirst({
+          where: {
+            customerId: seatSession.customerId!,
+            status: 'ACTIVE',
+            endDate: { gte: new Date() }
+          }
+        })
+        
+        if (membership) {
+          // Update membership hours used
+          await tx.customerMembership.update({
+            where: { id: membership.id },
+            data: {
+              hoursUsed: membership.hoursUsed + membershipHoursUsed + overageHours
+            }
+          })
+          
+          // Create usage record
+          // Round overage charge to nearest ¥10 to avoid odd prices
+          const overageChargeMinor = Math.round(overageHours * 300) * 100 // Round to nearest ¥10
+          await tx.membershipUsage.create({
+            data: {
+              membershipId: membership.id,
+              seatSessionId: seatSession.id,
+              hoursUsed: membershipHoursUsed + overageHours,
+              overageHours: overageHours,
+              overageCharge: overageChargeMinor,
+              description: `Table ${seatSession.seat.table.name} - Seat ${seatSession.seat.number}`
+            }
+          })
+        }
+      }
+      
       // Create order item for seat time (only if there's a charge)
       let orderItem = null
-      if (totalPrice > 0) {
+      if (totalPrice > 0 || chargeDescription) {
         orderItem = await tx.orderItem.create({
           data: {
             orderId: seatSession.orderId,
             kind: 'seat_time',
-            name: `Seat ${seatSession.seat.table.name}-${seatSession.seat.number} (${chargeDescription})`,
+            name: `Seat ${seatSession.seat.table.name}-${seatSession.seat.number} (${chargeDescription || `${durationMinutes} min`})`,
             qty: 1,
-            unitPriceMinor: totalPrice * 100, // Convert to minor units (yen)
-            taxMinor: 0, // Tax included in price
+            unitPriceMinor: totalPrice * 100, // Tax-inclusive price
+            taxMinor: 0, // Tax already included in price
             totalMinor: totalPrice * 100, // Total (tax inclusive)
             meta: {
               seatId: id,
               sessionId: seatSession.id,
               durationMinutes,
-              billing: {
-                rateApplied: billing.rateApplied,
-                breakdown: billing.breakdown,
-              },
+              membershipUsed: membershipUsed ? {
+                hoursIncluded: membershipHoursUsed,
+                hoursOverage: overageHours,
+                planName: membershipUsed.planName
+              } : null,
             },
           },
         })
       }
 
-      // Update seat session
+      // Update seat session with metadata indicating timer stopped
       const updatedSession = await tx.seatSession.update({
         where: { id: seatSession.id },
         data: {
           endedAt,
           billedMinutes: durationMinutes,
           billedItemId: orderItem?.id || null,
+          meta: {
+            ...seatSession.meta,
+            timerStopped: true,
+            stoppedAt: endedAt.toISOString()
+          }
         },
       })
 
@@ -204,52 +286,18 @@ export async function DELETE(
         data: { status: 'awaiting_payment' },
       })
 
-      // Update seat status back to open
-      await tx.seat.update({
-        where: { id },
-        data: { status: 'open' },
-      })
+      // IMPORTANT: Keep seat as occupied so customer can add items or checkout
+      // Seat will be cleared only after payment is complete
+      // Do NOT update seat status to 'open' here
+      
+      // Keep table as seated since seats are still occupied
+      // Table will be marked as dirty only after all seats are cleared post-payment
 
-      // Check if table should be marked as dirty or remain seated
-      const otherOccupiedSeats = await tx.seat.count({
-        where: {
-          tableId: seatSession.seat.tableId,
-          status: 'occupied',
-          id: { not: id },
-        },
-      })
+      // Note: The following code block for checking other occupied seats is now removed
+      // as we're keeping the seat occupied until checkout is complete
 
-      if (otherOccupiedSeats === 0) {
-        // No other occupied seats, mark table as dirty (needs cleaning)
-        await tx.table.update({
-          where: { id: seatSession.seat.tableId },
-          data: { status: 'dirty' },
-        })
-
-        // Check for active game sessions on this table
-        const activeGameSessions = await tx.tableGameSession.findMany({
-          where: {
-            tableId: seatSession.seat.tableId,
-            endedAt: null,
-          },
-          include: {
-            game: true,
-          },
-        })
-
-        // End all active game sessions and make games available again
-        for (const gameSession of activeGameSessions) {
-          await tx.tableGameSession.update({
-            where: { id: gameSession.id },
-            data: { endedAt },
-          })
-
-          await tx.game.update({
-            where: { id: gameSession.gameId },
-            data: { available: true },
-          })
-        }
-      }
+      // Note: Game sessions remain active until the seat is fully cleared after payment
+      // This allows customers to continue playing while waiting to pay
 
       // Log order event
       await tx.orderEvent.create({

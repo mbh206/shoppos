@@ -192,7 +192,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
 
       {/* Navigation Items */}
       <nav className="flex-1 p-4">
-        <ul className="space-y-2">
+        <ul className="gap-y-2">
           {filteredNavItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             

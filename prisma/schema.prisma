@@ -48,6 +48,7 @@ model Customer {
   displayName      String?
   phone            String?
   email            String?
+  pointsBalance    Int           @default(0)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   orders           Order[]
@@ -56,6 +57,9 @@ model Customer {
   rentals          Rental[]
   gameRentals      GameRental[]
   eventTickets     EventTicket[]
+  pointsTransactions PointsTransaction[]
+  memberships      CustomerMembership[]
+  gameHistory      CustomerGameHistory[]
 }
 
 model Table {
@@ -77,6 +81,7 @@ model Table {
   updatedAt    DateTime    @updatedAt
   seats        Seat[]
   gameSessions TableGameSession[]
+  gameHistories CustomerGameHistory[]
 
   @@index([floor, zone])
 }
@@ -129,10 +134,15 @@ model Order {
   closedAt        DateTime?
   notes           String?
   meta            Json?
+  paymentGroupId  String?          // Groups orders paid together
+  isPrimaryPayer  Boolean          @default(false) // True for the order that initiated group payment
+  paidByOrderId   String?          // Which order actually paid for this one
   customer        Customer?        @relation(fields: [customerId], references: [id])
   payer           Customer?        @relation("Payer", fields: [payerCustomerId], references: [id])
   openedBy        User             @relation("OpenedBy", fields: [openedByUserId], references: [id])
   closedBy        User?            @relation("ClosedBy", fields: [closedByUserId], references: [id])
+  paidByOrder     Order?           @relation("PaymentGroup", fields: [paidByOrderId], references: [id])
+  paidForOrders   Order[]          @relation("PaymentGroup")
   items           OrderItem[]
   seatSessions    SeatSession[]
   events          OrderEvent[]
@@ -144,6 +154,7 @@ model Order {
   @@index([status, channel])
   @@index([openedAt])
   @@index([customerId])
+  @@index([paymentGroupId])
 }
 
 enum OrderChannel {
@@ -186,6 +197,7 @@ enum OrderItemKind {
   event
   rental_deposit
   rental_fee
+  membership
 }
 
 model SeatSession {
@@ -298,6 +310,8 @@ model PaymentAttempt {
 enum PaymentMethod {
   square_terminal
   cash
+  points
+  mixed  // For multiple payment methods combined
 }
 
 enum PaymentStatus {
@@ -646,6 +660,7 @@ model Game {
   
   tableSessions  TableGameSession[]
   rentals        GameRental[]
+  playerHistories CustomerGameHistory[]
   
   @@index([name])
   @@index([available])
@@ -662,10 +677,33 @@ model TableGameSession {
   
   table      Table       @relation(fields: [tableId], references: [id])
   game       Game        @relation(fields: [gameId], references: [id])
+  playerHistories CustomerGameHistory[]
   
   @@index([tableId])
   @@index([gameId])
   @@index([startedAt])
+}
+
+model CustomerGameHistory {
+  id              String              @id @default(cuid())
+  customerId      String
+  gameId          String
+  sessionId       String
+  tableId         String
+  playedAt        DateTime            @default(now())
+  durationMinutes Int?
+  coPlayers       String[]            // Array of customer IDs who played together
+  coPlayerNames   String[]            // Array of customer names for display
+  orderId         String?             // Order that included this game
+  
+  customer        Customer            @relation(fields: [customerId], references: [id])
+  game            Game                @relation(fields: [gameId], references: [id])
+  session         TableGameSession    @relation(fields: [sessionId], references: [id])
+  table           Table               @relation(fields: [tableId], references: [id])
+  
+  @@index([customerId])
+  @@index([gameId])
+  @@index([playedAt])
 }
 
 model GameRental {
@@ -790,4 +828,98 @@ model TimeEntry {
   
   @@index([userId, clockIn])
   @@index([status])
+}
+
+// Loyalty & Membership Models
+
+model PointsTransaction {
+  id             String               @id @default(cuid())
+  customerId     String
+  customer       Customer             @relation(fields: [customerId], references: [id])
+  orderId        String?
+  type           PointsTransactionType
+  amount         Int                  // Positive for earned, negative for redeemed
+  balanceAfter   Int                  // Customer's balance after this transaction
+  description    String?
+  createdAt      DateTime             @default(now())
+  
+  @@index([customerId])
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+enum PointsTransactionType {
+  EARNED          // Points earned from purchase
+  REDEEMED        // Points used for payment
+  REFUNDED        // Points removed due to refund
+  BONUS           // Bonus points (membership purchase, promotions)
+  MANUAL_ADJUSTMENT // Admin adjustment
+  EXPIRED         // Points expired (if we add expiration later)
+}
+
+model MembershipPlan {
+  id                   String               @id @default(cuid())
+  name                 String               @unique
+  nameJa               String?
+  description          String?
+  descriptionJa        String?
+  price                Int                  // Monthly price in minor units (8000 = ¥8000)
+  hoursIncluded        Float                @default(20) // Hours included per month
+  overageRate          Int                  @default(300) // Overage rate per hour in minor units
+  pointsOnPurchase     Int                  @default(200) // Bonus points when purchasing
+  earnRateDenominator  Int                  @default(40) // Points earned per this amount spent
+  isActive             Boolean              @default(true)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  memberships          CustomerMembership[]
+}
+
+model CustomerMembership {
+  id              String             @id @default(cuid())
+  customerId      String
+  customer        Customer           @relation(fields: [customerId], references: [id])
+  planId          String
+  plan            MembershipPlan     @relation(fields: [planId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  hoursUsed       Float              @default(0)
+  autoRenew       Boolean            @default(false)
+  status          MembershipStatus
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  usage           MembershipUsage[]
+  
+  @@index([customerId])
+  @@index([status, endDate])
+}
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PENDING    // For future-dated memberships
+}
+
+model MembershipUsage {
+  id              String             @id @default(cuid())
+  membershipId    String
+  membership      CustomerMembership @relation(fields: [membershipId], references: [id])
+  seatSessionId   String?
+  hoursUsed       Float
+  overageHours    Float              @default(0)
+  overageCharge   Int                @default(0) // Overage amount in minor units
+  description     String?
+  createdAt       DateTime           @default(now())
+  
+  @@index([membershipId])
+  @@index([createdAt])
+}
+
+model PointsSettings {
+  id                   String    @id @default("default")
+  regularEarnRate      Int       @default(50) // Earn 1 point per ¥50 spent
+  memberEarnRate       Int       @default(40) // Members earn 1 point per ¥40 spent
+  pointsPerYen         Int       @default(1)  // 1 point = ¥1 redemption value
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }

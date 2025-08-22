@@ -2,17 +2,22 @@
  * Time-based billing calculation for seat charges
  * 
  * Pricing rules:
- * - Base rate: ¥500 per hour
- * - 15-minute grace period per hour (only charged if sitting > 15 min in that hour)
- * - Half-hour increments: 50% charge for 31-45 minutes into an hour
- * - 3-hour discount: ¥450/hour for all hours after 3 hours (with 10-min buffer at 171 min)
- * - 5-hour cap: ¥420/hour, max ¥2100 total (with 10-min buffer at 291 min)
+ * - First 2 hours: ¥500 per hour
+ * - After 2 hours: ¥200 per half hour (¥400 per hour)
+ * - 5-hour cap: ¥2200 maximum (no additional charges after 5 hours)
+ * 
+ * Examples:
+ * - 1 hour: ¥500
+ * - 2 hours: ¥1000
+ * - 3 hours: ¥1400 (¥1000 + 2*¥200)
+ * - 4 hours: ¥1800 (¥1000 + 4*¥200)
+ * - 5+ hours: ¥2200 (capped)
  */
 
 export interface TimeBilling {
   minutes: number
   totalCharge: number
-  rateApplied: 'standard' | '3hour' | '5hour'
+  rateApplied: 'standard' | 'discounted' | '5hour'
   breakdown: {
     hours: number
     halfHours: number
@@ -37,55 +42,60 @@ export function calculateTimeCharge(minutes: number): TimeBilling {
     }
   }
 
-  // Check for 5-hour cap (with 10-minute buffer at 291 minutes = 4h 51m)
-  if (minutes >= 291) {
-    // Fixed rate: ¥420 × 5 hours = ¥2100
+  // After 5 hours (300 minutes), cap at ¥2200
+  if (minutes >= 300) {
     return {
       minutes,
-      totalCharge: 2100,
+      totalCharge: 2200,
       rateApplied: '5hour',
       breakdown: {
         hours: 5,
         halfHours: 0,
         graceApplied: false,
-        ratePerHour: 420
+        ratePerHour: 440 // ¥2200 / 5 hours average
       }
     }
   }
 
-  // Check for 3-hour discount (with 10-minute buffer at 171 minutes = 2h 51m)
-  if (minutes >= 171) {
-    const ratePerHour = 450
-    const { hours, halfHours, graceApplied } = calculateBillableUnits(minutes)
-    const totalCharge = (hours * ratePerHour) + (halfHours * ratePerHour / 2)
+  // First 2 hours (120 minutes) at ¥500/hour
+  if (minutes <= 120) {
+    const { hours, halfHours } = calculateBillableUnits(minutes)
+    const totalCharge = (hours * 500) + (halfHours * 250) // ¥250 per half hour
     
     return {
       minutes,
       totalCharge,
-      rateApplied: '3hour',
+      rateApplied: 'standard',
       breakdown: {
         hours,
         halfHours,
-        graceApplied,
-        ratePerHour
+        graceApplied: false,
+        ratePerHour: 500
       }
     }
   }
 
-  // Standard rate: ¥500 per hour
-  const ratePerHour = 500
-  const { hours, halfHours, graceApplied } = calculateBillableUnits(minutes)
-  const totalCharge = (hours * ratePerHour) + (halfHours * ratePerHour / 2)
-
+  // After 2 hours: ¥200 per half hour
+  // First 2 hours cost ¥1000 fixed
+  const firstTwoHoursCharge = 1000
+  const remainingMinutes = minutes - 120
+  
+  // Calculate half-hour blocks for time after first 2 hours
+  // Round up to nearest half hour
+  const additionalHalfHours = Math.ceil(remainingMinutes / 30)
+  const additionalCharge = additionalHalfHours * 200
+  
+  const totalCharge = firstTwoHoursCharge + additionalCharge
+  
   return {
     minutes,
     totalCharge,
-    rateApplied: 'standard',
+    rateApplied: 'discounted',
     breakdown: {
-      hours,
-      halfHours,
-      graceApplied,
-      ratePerHour
+      hours: Math.floor(minutes / 60),
+      halfHours: additionalHalfHours,
+      graceApplied: false,
+      ratePerHour: 400 // ¥200 per half hour = ¥400 per hour
     }
   }
 }
@@ -93,36 +103,37 @@ export function calculateTimeCharge(minutes: number): TimeBilling {
 function calculateBillableUnits(minutes: number): { 
   hours: number
   halfHours: number
-  graceApplied: boolean 
 } {
-  const fullHours = Math.floor(minutes / 60)
-  const remainingMinutes = minutes % 60
+  // For first hour (0-60 minutes), charge full hour
+  if (minutes > 0 && minutes <= 60) {
+    return {
+      hours: 1,
+      halfHours: 0
+    }
+  }
   
-  let billableHours = fullHours
+  // After first hour, calculate in 30-minute increments
+  const beyondFirstHour = minutes - 60
+  const additionalFullHours = Math.floor(beyondFirstHour / 60)
+  const remainingMinutes = beyondFirstHour % 60
+  
+  let billableHours = 1 + additionalFullHours // 1 for the first hour
   let billableHalfHours = 0
-  let graceApplied = false
 
-  // Handle remaining minutes in the current hour
+  // Handle remaining minutes after the first hour
   if (remainingMinutes > 0) {
-    if (remainingMinutes <= 10) {
-      // Grace period - no charge for first 15 minutes of an hour
-      graceApplied = true
-    } else if (remainingMinutes <= 30) {
-      // 16-30 minutes: charge half hour
-      billableHalfHours = 1
-    } else if (remainingMinutes <= 45) {
-      // 31-45 minutes: charge half hour (75% threshold)
+    if (remainingMinutes <= 30) {
+      // 1-30 minutes: charge half hour
       billableHalfHours = 1
     } else {
-      // 46-59 minutes: charge full hour
+      // 31-60 minutes: charge full hour
       billableHours += 1
     }
   }
 
   return {
     hours: billableHours,
-    halfHours: billableHalfHours,
-    graceApplied
+    halfHours: billableHalfHours
   }
 }
 
@@ -148,18 +159,14 @@ export function getTimeChargeDescription(billing: TimeBilling): string {
     : `${mins}m`
 
   if (billing.rateApplied === '5hour') {
-    return `Time: ${timeStr} (5+ hour flat rate)`
+    return `${timeStr}`
   }
 
-  if (billing.rateApplied === '3hour') {
-    return `Time: ${timeStr} (3+ hour discount rate)`
+  if (billing.rateApplied === 'discounted') {
+    return `${timeStr}`
   }
 
-  if (billing.breakdown.graceApplied) {
-    return `Time: ${timeStr} (within grace period)`
-  }
-
-  return `Time: ${timeStr}`
+  return `${timeStr}`
 }
 
 /**
