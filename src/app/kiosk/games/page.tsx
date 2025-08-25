@@ -58,6 +58,15 @@ export default function KioskGamesPage() {
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null)
   const [isIdle, setIsIdle] = useState(false)
   
+  // Background image rotation for screensaver
+  const [currentBgIndex, setCurrentBgIndex] = useState(0)
+  const [backgroundImages, setBackgroundImages] = useState<string[]>([])
+  const bgRotationTimerRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Dynamic positions for collision physics
+  const [cardPositions, setCardPositions] = useState<Array<{x: number, y: number, vx: number, vy: number}>>([])
+  const animationFrameRef = useRef<number | null>(null)
+  
   // Language
   const [language, setLanguage] = useState<'en' | 'ja'>('en')
 
@@ -68,6 +77,46 @@ export default function KioskGamesPage() {
     return () => clearInterval(interval)
   }, [])
 
+  // Set up background images when games are loaded
+  useEffect(() => {
+    if (games.length > 0) {
+      const imagesWithUrls = games
+        .filter(game => game.thumbnailUrl || game.imageUrl)
+        .map(game => game.thumbnailUrl || game.imageUrl!)
+        .slice(0, 85) // Limit to 85 images for performance
+      
+      setBackgroundImages(imagesWithUrls)
+      setCurrentBgIndex(0)
+    }
+  }, [games])
+
+  // Initialize card positions separately (only once when backgroundImages is first set)
+  useEffect(() => {
+    if (backgroundImages.length > 0 && cardPositions.length === 0) {
+      const initialPositions = []
+      for (let i = 0; i < 5; i++) {
+        let position
+        let attempts = 0
+        do {
+          // Classic screensaver: consistent speed in random direction
+          const angle = Math.random() * Math.PI * 2
+          const speed = 0.03
+          position = {
+            x: Math.random() * 70 + 5, // 5% to 75%
+            y: Math.random() * 60 + 10, // 10% to 70%
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed
+          }
+          attempts++
+        } while (attempts < 10 && initialPositions.some(pos => 
+          Math.sqrt(Math.pow(pos.x - position.x, 2) + Math.pow(pos.y - position.y, 2)) < 20
+        ))
+        initialPositions.push(position)
+      }
+      setCardPositions(initialPositions)
+    }
+  }, [backgroundImages.length, cardPositions.length])
+
   useEffect(() => {
     filterAndSortGames()
   }, [games, searchTerm, playerCount, maxDuration, complexity, selectedCategory, onlyAvailable, sortBy])
@@ -77,7 +126,7 @@ export default function KioskGamesPage() {
     const resetIdleTimer = () => {
       setIsIdle(false)
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
-      idleTimerRef.current = setTimeout(() => setIsIdle(true), 120000) // 2 minutes
+      idleTimerRef.current = setTimeout(() => setIsIdle(true), 300000) // 5 minutes
     }
     
     window.addEventListener('touchstart', resetIdleTimer)
@@ -90,6 +139,70 @@ export default function KioskGamesPage() {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
     }
   }, [])
+
+  // Handle background image rotation when screensaver is active
+  useEffect(() => {
+    if (isIdle && backgroundImages.length > 1) {
+      // Start rotating images every 2 seconds for faster card transitions
+      bgRotationTimerRef.current = setInterval(() => {
+        setCurrentBgIndex(prev => (prev + 1) % backgroundImages.length)
+      }, 2000)
+      
+      return () => {
+        if (bgRotationTimerRef.current) {
+          clearInterval(bgRotationTimerRef.current)
+        }
+      }
+    } else {
+      // Clear rotation when not idle
+      if (bgRotationTimerRef.current) {
+        clearInterval(bgRotationTimerRef.current)
+      }
+    }
+  }, [isIdle, backgroundImages.length])
+
+  // Physics animation loop for collision detection
+  useEffect(() => {
+    if (isIdle && cardPositions.length > 0) {
+      const animate = () => {
+        setCardPositions(prevPositions => {
+          const newPositions = [...prevPositions]
+          
+          // Update positions with constant velocity
+          for (let i = 0; i < newPositions.length; i++) {
+            newPositions[i] = {
+              ...newPositions[i],
+              x: newPositions[i].x + newPositions[i].vx,
+              y: newPositions[i].y + newPositions[i].vy
+            }
+            
+            // Bounce off screen edges (perfect reflection)
+            if (newPositions[i].x <= 2 || newPositions[i].x >= 78) {
+              newPositions[i].vx *= -1
+              newPositions[i].x = newPositions[i].x <= 2 ? 2 : 78
+            }
+            if (newPositions[i].y <= 8 || newPositions[i].y >= 72) {
+              newPositions[i].vy *= -1
+              newPositions[i].y = newPositions[i].y <= 8 ? 8 : 72
+            }
+            
+          }
+          
+          return newPositions
+        })
+        
+        animationFrameRef.current = requestAnimationFrame(animate)
+      }
+      
+      animationFrameRef.current = requestAnimationFrame(animate)
+      
+      return () => {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current)
+        }
+      }
+    }
+  }, [isIdle, cardPositions.length])
 
   const fetchGames = async () => {
     try {
@@ -304,32 +417,74 @@ export default function KioskGamesPage() {
 
   // Screensaver component
   if (isIdle) {
+    // Get multiple images for floating gallery with staggered transitions
+    const floatingImages = Array.from({ length: 5 }, (_, index) => {
+      // Each card cycles through games at different intervals to avoid jumping
+      const cycleSpeed = [3, 5, 7, 4, 6][index] // Different cycle speeds for each card
+      const gameOffset = Math.floor(currentBgIndex / cycleSpeed) + (index * Math.floor(backgroundImages.length / 5))
+      const imageIndex = gameOffset % backgroundImages.length
+      const imageUrl = backgroundImages[imageIndex]
+      const game = games.find(g => (g.thumbnailUrl || g.imageUrl) === imageUrl)
+      return { imageUrl, game, index, gameOffset }
+    })
+
     return (
       <div 
-        className="fixed inset-0 bg-gradient-to-br from-purple-900 via-purple-700 to-pink-700 flex items-center justify-center cursor-pointer"
+        className="fixed inset-0 bg-gradient-to-br from-brand-main via-brand-accent-2 to-brand-secondary-2 flex items-center justify-center cursor-pointer overflow-hidden"
         onClick={() => setIsIdle(false)}
       >
-        <div className="text-center">
-          <div className="animate-pulse">
-            <h1 className="text-7xl font-bold text-white mb-2">
+        {/* Floating Game Images with Physics */}
+        {floatingImages.map(({ imageUrl, game, index, gameOffset }) => {
+          const position = cardPositions[index]
+          if (!position) return null
+          
+          return (
+            <div
+              key={`floating-${index}`}
+              className="absolute z-10 transition-all duration-100 ease-out"
+              style={{
+                left: `${position.x}%`,
+                top: `${position.y}%`,
+                opacity: 1 + (index * 0.05),
+                transform: `rotate(${Math.sin(Date.now() * 0.001 + index) * 5}deg)`,
+              }}
+            >
+              <div className="bg-white/80 backdrop-blur-sm shadow-lg rounded overflow-hidden transform transition-all duration-1000">
+                <Image
+                  key={`image-${gameOffset}`}
+                  src={imageUrl}
+                  alt={game?.name || 'Game'}
+                  width={index === 0 ? 200 : index === 2 ? 180 : 160}
+                  height={index === 0 ? 150 : index === 2 ? 135 : 120}
+                  className="object-cover transition-opacity duration-1000"
+                />
+              </div>
+            </div>
+          )
+        })}
+        
+        {/* Content */}
+        <div className="relative z-50 text-center max-w-6xl mx-auto px-8">
+          <div className="bg-brand-main rounded-2xl px-4 py-2">
+            <h1 className="text-7xl font-bold text-white mb-2 drop-shadow-2xl">
               Tap to Browse Games
             </h1>
-            <h2 className="text-5xl font-bold text-white/90 mb-8">
+            <h2 className="text-5xl font-bold text-white/90 drop-shadow-xl">
               タップしてゲームを探す
             </h2>
           </div>
           
-          <div className="space-y-2 animate-pulse" style={{ animationDelay: '0.5s' }}>
-            <div className="text-3xl text-white/80 font-medium">
-              {games.filter(g => g.available).length} Games Available
+          <div className="space-y-2 " style={{ animationDelay: '0.5s' }}>
+            <div className="text-3xl text-white/80 font-medium drop-shadow-lg">
+              {games.filter(g => g.available).length} Games of {games.length} Available
             </div>
-            <div className="text-2xl text-white/70">
-              {games.filter(g => g.available).length} ゲーム利用可能
+            <div className="text-2xl text-white/70 drop-shadow-lg">
+               {games.length}ゲーム中{games.filter(g => g.available).length}ゲームが利用可能
             </div>
           </div>
           
           <div className="mt-12 animate-bounce">
-            <svg className="w-16 h-16 mx-auto text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 mx-auto text-white/60 drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z" />
             </svg>
           </div>
@@ -531,7 +686,7 @@ export default function KioskGamesPage() {
                 <div className="flex items-center gap-3">
                   {game.thumbnailUrl && (
                     <img 
-                      src={game.thumbnailUrl} 
+                      src={game.imageUrl} 
                       alt={game.name}
                       className="w-16 h-16 object-cover rounded"
                     />

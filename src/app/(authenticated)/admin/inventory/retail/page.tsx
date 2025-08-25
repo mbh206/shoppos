@@ -340,7 +340,7 @@ export default function RetailPage() {
                         <div className="text-xs text-gray-500">{item.nameJa}</div>
                       )}
                       {item.barcode && (
-                        <div className="text-xs text-gray-400">BC: {item.barcode}</div>
+                        <div className="text-xs text-gray-200">BC: {item.barcode}</div>
                       )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">

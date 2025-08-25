@@ -242,7 +242,7 @@ export default function EmployeeManagement() {
                           </div>
                           <div className="text-sm text-gray-500">{employee.email}</div>
                           {employee.profile?.phoneNumber && (
-                            <div className="text-xs text-gray-400">{employee.profile.phoneNumber}</div>
+                            <div className="text-xs text-gray-200">{employee.profile.phoneNumber}</div>
                           )}
                         </div>
                       </td>

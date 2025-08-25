@@ -151,16 +151,16 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
   const filteredNavItems = navItems.filter(item => item.show())
 
   return (
-    <div className={`${isCollapsed ? 'w-16' : 'w-48'} bg-gray-900 text-white h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col`}>
+    <div className={`${isCollapsed ? 'w-16' : 'w-48'} bg-brand-main text-white h-screen fixed left-0 top-0 transition-all duration-300 flex flex-col`}>
       {/* Header */}
-      <div className="px-4 py-1 border-b border-gray-800">
+      <div className="px-4 py-1 border-b border-brand-accent-1/30">
         <div className="flex items-center justify-between">
           <h1 className={`font-bold text-xl ${isCollapsed ? 'hidden' : 'block'}`}>
             KOMA POS {isRetailMode && <span className="text-yellow-400 text-sm">(Retail)</span>}
           </h1>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 hover:bg-gray-800 rounded"
+            className="p-1 hover:bg-brand-accent-2/50 rounded"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isCollapsed ? (
@@ -174,7 +174,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
       </div>
 
       {/* User Info */}
-      <div className="px-4 py-1 border-b border-gray-800">
+      <div className="px-4 py-1 border-b border-brand-accent-1/30">
         <div className={`${isCollapsed ? 'text-center' : ''}`}>
           <div className={`text-sm text-gray-400 ${isCollapsed ? 'hidden' : 'block'}`}>
             {userName || userEmail}
@@ -202,15 +202,15 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-1 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'hover:bg-gray-800 text-gray-300 hover:text-white'
+                      ? 'bg-brand-secondary-2 text-white'
+                      : 'hover:bg-brand-accent-2/50 text-gray-300 hover:text-white'
                   }`}
                   title={isCollapsed ? item.name : undefined}
                 >
                   <span className="flex-shrink-0">{item.icon}</span>
                   <div className={`${isCollapsed ? 'hidden' : 'flex flex-col'}`}>
                     <span className="text-sm">{item.name}</span>
-                    <span className="text-xs text-gray-400">{item.nameJa}</span>
+                    <span className="text-xs text-gray-200">{item.nameJa}</span>
                   </div>
                 </Link>
               </li>
@@ -219,7 +219,7 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
         </ul>
         
         {/* Time Clock Button */}
-        <div className=" pt-2 pb-2 mt-6 border-t border-gray-800 bg-orange-600/90 hover:bg-orange-400 hover:text-white rounded-xl">
+        <div className=" pt-2 pb-2 mt-6 border-t border-brand-accent-1/30 bg-brand-secondary-2/90 hover:bg-brand-secondary-2 hover:text-white rounded-xl">
           <button
             onClick={() => setShowTimeClock(true)}
             className="w-full flex items-center gap-3 px-3 py-1 rounded-lg transition-colors relative"
@@ -246,11 +246,11 @@ export default function Navigation({ userRole, userName, userEmail }: Navigation
       </nav>
 
       {/* Sign Out */}
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-4 border-t border-brand-accent-1/30">
         <form action="/api/auth/signout" method="POST">
           <button
             type="submit"
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition-colors ${
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-brand-accent-2 hover:text-white transition-colors ${
               isCollapsed ? 'justify-center' : ''
             }`}
             title={isCollapsed ? 'Sign Out' : undefined}

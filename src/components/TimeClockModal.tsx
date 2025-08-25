@@ -239,12 +239,12 @@ export default function TimeClockModal({ isOpen, onClose, currentUser }: TimeClo
         </div>
 
         {/* Active Employees Summary */}
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+        <div className="mb-4 p-3 bg-brand-secondary-1 rounded-lg">
           <button
             onClick={() => setShowActiveList(!showActiveList)}
             className="w-full flex justify-between items-center text-sm"
           >
-            <span className="font-medium text-blue-900">
+            <span className="font-medium text-brand-main">
               {activeEmployees.length} employees currently working
             </span>
             <svg 
@@ -258,9 +258,9 @@ export default function TimeClockModal({ isOpen, onClose, currentUser }: TimeClo
           </button>
           
           {showActiveList && activeEmployees.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-blue-200">
+            <div className="mt-2 pt-2 border-t border-brand-accent-1">
               {activeEmployees.map((entry) => (
-                <div key={entry.id} className="text-xs text-blue-800 py-1 flex justify-between">
+                <div key={entry.id} className="text-xs text-brand-main py-1 flex justify-between">
                   <span>{entry.user.name}</span>
                   <span>{calculateElapsedTime(entry.clockIn)}</span>
                 </div>
@@ -297,7 +297,7 @@ export default function TimeClockModal({ isOpen, onClose, currentUser }: TimeClo
             <button
               type="submit"
               disabled={loading || !employeeId.trim()}
-              className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2 bg-brand-main text-white rounded-lg hover:bg-brand-accent-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Looking up...' : 'Continue'}
             </button>
@@ -384,7 +384,7 @@ export default function TimeClockModal({ isOpen, onClose, currentUser }: TimeClo
                 <button
                   onClick={handleClockIn}
                   disabled={loading}
-                  className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-lg font-medium"
+                  className="w-full py-3 bg-brand-main text-white rounded-lg hover:bg-brand-accent-2 disabled:opacity-50 text-lg font-medium"
                 >
                   Clock In
                 </button>

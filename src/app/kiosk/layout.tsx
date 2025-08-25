@@ -4,7 +4,7 @@ export default function KioskLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+    <div className="min-h-screen bg-gradient-to-br from-brand-main via-brand-accent-2 to-brand-secondary-2">
       {children}
     </div>
   )

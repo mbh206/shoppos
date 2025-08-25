@@ -143,7 +143,7 @@ export default function MenuItemSelector({ orderId, onItemsAdded, onClose }: Men
             onClick={() => setSelectedCategory('all')}
             className={`px-4 py-2 rounded-lg whitespace-nowrap font-medium ${
               selectedCategory === 'all'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-brand-main text-white'
                 : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
@@ -155,7 +155,7 @@ export default function MenuItemSelector({ orderId, onItemsAdded, onClose }: Men
               onClick={() => setSelectedCategory(category.id)}
               className={`px-4 py-2 rounded-lg whitespace-nowrap font-medium ${
                 selectedCategory === category.id
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-brand-main text-white'
                   : 'bg-gray-100 hover:bg-gray-200'
               }`}
             >
